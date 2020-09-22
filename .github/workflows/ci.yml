@@ -1,0 +1,31 @@
+name: CI
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goanpeca/setup-miniconda@v1
+        with:
+          miniconda-version: "latest"
+          activate-environment: MCP-FS
+          python-version: 3.7
+      - uses: actions/cache@v2
+        with:
+          path: /home/runner/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-dependencies-${{ hashFiles('environment*') }}
+      - name: Install Dependencies
+        shell: bash -l {0}
+        run: |
+          conda env update -f environment.yml
+          conda env update -f environment-dev.yml
+      - name: Lint
+        shell: bash -l {0}
+        run: |
+          ./ci/lint.sh
+      - name: Unit Tests
+        shell: bash -l {0}
+        run: |
+          ./ci/unittest.sh
