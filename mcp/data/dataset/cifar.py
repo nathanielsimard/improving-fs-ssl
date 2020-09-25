@@ -128,6 +128,8 @@ class CifarFsDataset(Dataset):
         img, label = self.dataset[index]
 
         label = self.classes_mapping[label]
+        # We need to convert the image (PIL.Image) to numpy.ndarray
+        # before transforming it to torch.Tensor.
         img = torch.as_tensor(np.array(img))
 
         return img, label
