@@ -4,8 +4,7 @@ from typing import Dict, List, Tuple
 from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR100
 
-from mcp.data.dataset.dataset import ComposedDataset, IndexedDataset
-from mcp.data.dataset.selector import DatasetLoader
+from mcp.data.dataset.dataset import ComposedDataset, DatasetLoader, IndexedDataset
 
 CLASSES_TRAIN = [
     "train",

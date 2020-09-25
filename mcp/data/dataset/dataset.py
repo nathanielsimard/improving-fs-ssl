@@ -1,6 +1,16 @@
-from typing import List
+import abc
+from typing import List, Tuple
 
 from torch.utils.data import Dataset
+
+
+class DatasetLoader(abc.ABC):
+    def load(self, output_dir: str) -> Tuple[Dataset, Dataset, Dataset]:
+        """Load the dataset correctly splitted.
+
+        The splits are (train, valid, test).
+        """
+        pass
 
 
 class ListDataset(Dataset):

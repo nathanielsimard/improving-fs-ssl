@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from torch.utils.data import Dataset
 
-from mcp.data.dataset.composed import ListDataset
+from mcp.data.dataset.dataset import ListDataset
 
 
 def create_random_dataset(num_items: int, num_classes: int, shape: Tuple) -> Dataset:
