@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
+import numpy as np
+import torch
 from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR100
 
@@ -114,11 +116,40 @@ CLASSES_TEST = [
 ]
 
 
+class CifarFsDataset(Dataset):
+    def __init__(self, dataset: Dataset, classes_mapping: Dict[int, int]):
+        self.dataset = dataset
+        self.classes_mapping = classes_mapping
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index: int):
+        img, label = self.dataset[index]
+
+        label = self.classes_mapping[label]
+        img = torch.as_tensor(np.array(img))
+
+        return img, label
+
+
 class CifarFsDatasetLoader(DatasetLoader):
     """Create the CIFAR-FS Dataset from the CIFAR-100 Dataset.
 
     The data will automatically be downloaded if not present in the `output_dir`.
     """
+
+    def __init__(self, convert_labels: bool):
+        """Create the loader.
+
+        Args:
+            convert_labels: Convert the labels from the original one (100 classes)
+                            to the new one depending of the dataset split.
+                                - Train: 64 labels
+                                - Valid: 16 labels
+                                - Test: 20 labels
+        """
+        self.convert_labels = convert_labels
 
     def load(self, output_dir: str) -> Tuple[Dataset, Dataset, Dataset]:
         cifar100_train = self.download(output_dir, train=True)
@@ -144,14 +175,40 @@ class CifarFsDatasetLoader(DatasetLoader):
             clazz = classes[clazz_index]  # type: ignore
             class_to_index[clazz].append(i)
 
-        def create_dataset(classes):
-            indexes = []
-            for clazz in classes:
-                indexes += class_to_index[clazz]
-            return IndexedDataset(cifar100, indexes)
-
-        return (
-            create_dataset(CLASSES_TRAIN),
-            create_dataset(CLASSES_VALID),
-            create_dataset(CLASSES_TEST),
+        dataset_train = self._create_dataset(
+            classes, CLASSES_TRAIN, cifar100, class_to_index
         )
+        dataset_valid = self._create_dataset(
+            classes, CLASSES_VALID, cifar100, class_to_index
+        )
+        dataset_test = self._create_dataset(
+            classes, CLASSES_TEST, cifar100, class_to_index
+        )
+
+        return dataset_train, dataset_valid, dataset_test
+
+    def _create_dataset(self, classes_total, classes_split, dataset, class_to_index):
+        dataset = self._indexed_dataset(classes_split, class_to_index, dataset)
+        dataset = self._cifar_fs_dataset(classes_total, classes_split, dataset)
+
+        return dataset
+
+    def _cifar_fs_dataset(self, classes_total, classes_split, dataset):
+        mapping = {}
+        current_index = 0
+
+        for i, clazz in enumerate(classes_total):
+            if not self.convert_labels:
+                mapping[i] = i
+            elif clazz in classes_split:
+                mapping[i] = current_index
+                current_index += 1
+
+        return CifarFsDataset(dataset, mapping)
+
+    def _indexed_dataset(self, classes_split, class_to_index, dataset):
+        indexes = []
+        for clazz in classes_split:
+            indexes += class_to_index[clazz]
+
+        return IndexedDataset(dataset, indexes)
