@@ -154,22 +154,24 @@ class CifarFsDatasetLoader(DatasetLoader):
         self.convert_labels = convert_labels
 
     def load(self, output_dir: str) -> Tuple[Dataset, Dataset, Dataset]:
-        cifar100_train = self.download(output_dir, train=True)
-        cifar100_test = self.download(output_dir, train=False)
+        cifar100_train = self._download(output_dir, train=True)
+        cifar100_test = self._download(output_dir, train=False)
 
+        classes = cifar100_train.classes  # type: ignore
         # We redo the splitting, so we include all data from the original train and test set.
-        classes = cifar100_train.classes
         cifar100_full = ComposedDataset([cifar100_train, cifar100_test])
 
-        return self.split(cifar100_full, classes)
+        return self._split(cifar100_full, classes)
 
-    def download(self, output_dir: str, train=True):
+    def _download(self, output_dir: str, train=True) -> Dataset:
         try:
             return CIFAR100(output_dir, train=train)
         except Exception:
             return CIFAR100(output_dir, download=True, train=train)
 
-    def split(self, cifar100, classes) -> Tuple[Dataset, Dataset, Dataset]:
+    def _split(
+        self, cifar100: Dataset, classes: List[str]
+    ) -> Tuple[Dataset, Dataset, Dataset]:
         class_to_index: Dict[str, List[int]] = defaultdict(lambda: [])
 
         for i in range(len(cifar100)):
@@ -189,13 +191,21 @@ class CifarFsDatasetLoader(DatasetLoader):
 
         return dataset_train, dataset_valid, dataset_test
 
-    def _create_dataset(self, classes_total, classes_split, dataset, class_to_index):
+    def _create_dataset(
+        self,
+        classes_total: List[str],
+        classes_split: List[str],
+        dataset: Dataset,
+        class_to_index: Dict[str, List[int]],
+    ) -> Dataset:
         dataset = self._indexed_dataset(classes_split, class_to_index, dataset)
         dataset = self._cifar_fs_dataset(classes_total, classes_split, dataset)
 
         return dataset
 
-    def _cifar_fs_dataset(self, classes_total, classes_split, dataset):
+    def _cifar_fs_dataset(
+        self, classes_total: List[str], classes_split: List[str], dataset: Dataset
+    ) -> Dataset:
         mapping = {}
         current_index = 0
 
@@ -208,7 +218,12 @@ class CifarFsDatasetLoader(DatasetLoader):
 
         return CifarFsDataset(dataset, mapping)
 
-    def _indexed_dataset(self, classes_split, class_to_index, dataset):
+    def _indexed_dataset(
+        self,
+        classes_split: List[str],
+        class_to_index: Dict[str, List[int]],
+        dataset: Dataset,
+    ) -> Dataset:
         indexes = []
         for clazz in classes_split:
             indexes += class_to_index[clazz]
