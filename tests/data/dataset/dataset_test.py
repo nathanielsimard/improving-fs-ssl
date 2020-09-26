@@ -1,7 +1,11 @@
 import unittest
 
-from mcp.data.dataset.dataset import ComposedDataset, ListDataset
-from tests.helpers.dataset import create_random_dataset, item_equal
+from mcp.data.dataset.dataset import (
+    ComposedDataset,
+    ListDataset,
+    create_few_shot_datasets,
+)
+from tests.helpers.dataset import create_random_dataset, item_equal, unique_classes
 
 NUM_ITEMS = 100
 NUM_CLASSES = 10
@@ -46,3 +50,40 @@ class ComposedDatasetTest(unittest.TestCase):
         self.assertRaises(ValueError, lambda: dataset[200])
         self.assertRaises(ValueError, lambda: dataset[201])
         self.assertRaises(ValueError, lambda: dataset[-201])
+
+
+class FewShotDatasetTest(unittest.TestCase):
+    def test_givenOneNumSample_trainDatasetShouldHaveOneSamplePerClass(self):
+        dataset = create_random_dataset(NUM_ITEMS, NUM_CLASSES, SHAPE)
+
+        train_dataset, test_dataset = create_few_shot_datasets(dataset, 1)
+
+        classes_train = unique_classes(train_dataset)
+        self.assertEqual(len(train_dataset), NUM_CLASSES)
+        self.assertEqual(len(classes_train), NUM_CLASSES)
+
+    def test_given5NumSamples_trainDatasetShouldHave5SamplePerClass(self):
+        num_samples = 5
+        # We add more item to make sure all classes are included
+        dataset = create_random_dataset(NUM_ITEMS * num_samples, NUM_CLASSES, SHAPE)
+
+        train_dataset, test_dataset = create_few_shot_datasets(dataset, num_samples)
+
+        classes_train = unique_classes(train_dataset)
+        self.assertEqual(len(train_dataset), num_samples * NUM_CLASSES)
+        self.assertEqual(len(classes_train), NUM_CLASSES)
+
+    def test_shouldNotHaveDupplicated(self):
+        dataset = create_random_dataset(NUM_ITEMS, NUM_CLASSES, SHAPE)
+
+        train_dataset, test_dataset = create_few_shot_datasets(dataset, 5)
+
+        samples = set()
+        for i in range(len(train_dataset)):
+            img, label = train_dataset[i]
+            samples.add((str(img), label))
+        for i in range(len(test_dataset)):
+            img, label = test_dataset[i]
+            samples.add((str(img), label))
+
+        self.assertEqual(len(samples), len(train_dataset) + len(test_dataset))
