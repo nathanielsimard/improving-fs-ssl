@@ -58,7 +58,7 @@ class ComposedDatasetTest(unittest.TestCase):
 
 
 class FewShotDatasetTest(unittest.TestCase):
-    def test_shouldNotHaveDupplicated(self):
+    def test_shouldNotHaveDupplicates(self):
         dataset = create_random_dataset(NUM_ITEMS, NUM_CLASSES, SHAPE)
 
         train_dataset, test_dataset = create_few_shot_datasets(dataset, 5)
