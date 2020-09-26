@@ -1,4 +1,4 @@
-from typing import Any, Set, Tuple
+from typing import Any, List, Set, Tuple
 
 import numpy as np
 from torch.utils.data import Dataset
@@ -27,3 +27,12 @@ def unique_classes(dataset: Dataset) -> Set[Any]:
         classes.add(dataset[i][1])
 
     return classes
+
+
+def unique_samples(datasets: List[Dataset]) -> Set[Any]:
+    samples = set()
+    for dataset in datasets:
+        for i in range(len(dataset)):
+            item = dataset[i]
+            samples.add((str(item[0]), item[1]))
+    return samples

@@ -5,6 +5,7 @@ import torch
 
 from mcp.data.dataset.cifar import CifarFsDatasetLoader
 from mcp.data.dataset.dataset import ComposedDataset
+from tests.helpers.dataset import unique_classes
 
 OUTPUT_DIR = "/tmp/MCP-FS/cifar-fs-test"
 CONVERT_LABELS = False
@@ -63,21 +64,14 @@ class CifarFsTest(unittest.TestCase):
         self.loader = CifarFsDatasetLoader(True)
         self.load_datasets()
 
-        classes_train = sorted(self._classes(self.dataset_train))
-        classes_valid = sorted(self._classes(self.dataset_valid))
-        classes_test = sorted(self._classes(self.dataset_test))
+        classes_train = sorted(unique_classes(self.dataset_train))
+        classes_valid = sorted(unique_classes(self.dataset_valid))
+        classes_test = sorted(unique_classes(self.dataset_test))
 
         self.assertEqual(list(range(64)), classes_train)
         self.assertEqual(list(range(16)), classes_valid)
         self.assertEqual(list(range(20)), classes_test)
 
     def _test_num_classes(self, dataset, num_classes):
-        classes = self._classes(dataset)
+        classes = unique_classes(dataset)
         self.assertEqual(num_classes, len(classes))
-
-    def _classes(self, dataset):
-        classes = set()
-        for i in range(len(dataset)):
-            classes.add(dataset[i][1])
-
-        return classes
