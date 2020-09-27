@@ -90,13 +90,13 @@ class IndexedDataset(Dataset):
 def create_few_shot_datasets(
     dataset: Dataset, num_samples: int
 ) -> Tuple[Dataset, Dataset]:
-    """Split the dataset in two.
+    """Split the dataset into a support and query dataset.
 
-    The first dataset contains 'num_samples' per classes in the original dataset, best used for training.
-    The second dataset contains all the remaining samples, best used for testing.
+    The first dataset (support-set) contains 'num_samples' per classes in the original dataset, best used for training.
+    The second dataset (query-set) contains all the remaining samples, best used for testing.
     """
-    indexes_test = []
-    indexes_train = []
+    indexes_query = []
+    indexes_support = []
 
     classes: Dict[Any, int] = defaultdict(lambda: 0)
 
@@ -104,9 +104,12 @@ def create_few_shot_datasets(
         _, clazz = dataset[index]
 
         if classes[clazz] >= num_samples:
-            indexes_test.append(index)
+            indexes_query.append(index)
         else:
             classes[clazz] += 1
-            indexes_train.append(index)
+            indexes_support.append(index)
 
-    return IndexedDataset(dataset, indexes_train), IndexedDataset(dataset, indexes_test)
+    return (
+        IndexedDataset(dataset, indexes_support),
+        IndexedDataset(dataset, indexes_query),
+    )
