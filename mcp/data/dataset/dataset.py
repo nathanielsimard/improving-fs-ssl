@@ -1,5 +1,6 @@
 import abc
-from typing import List, Tuple
+from collections import defaultdict
+from typing import Any, Dict, List, Tuple
 
 from torch.utils.data import Dataset
 
@@ -84,3 +85,31 @@ class IndexedDataset(Dataset):
         item = self.dataset[index]
 
         return item
+
+
+def create_few_shot_datasets(
+    dataset: Dataset, num_samples: int
+) -> Tuple[Dataset, Dataset]:
+    """Split the dataset into a support and query dataset.
+
+    The first dataset (support-set) contains 'num_samples' per classes in the original dataset, best used for training.
+    The second dataset (query-set) contains all the remaining samples, best used for testing.
+    """
+    indexes_query = []
+    indexes_support = []
+
+    classes: Dict[Any, int] = defaultdict(lambda: 0)
+
+    for index in range(len(dataset)):
+        _, clazz = dataset[index]
+
+        if classes[clazz] >= num_samples:
+            indexes_query.append(index)
+        else:
+            classes[clazz] += 1
+            indexes_support.append(index)
+
+    return (
+        IndexedDataset(dataset, indexes_support),
+        IndexedDataset(dataset, indexes_query),
+    )
