@@ -5,7 +5,11 @@ from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR100
 
 from mcp.data.dataset.dataset import ComposedDataset, DatasetLoader, IndexedDataset
-from mcp.data.dataset.transforms import TransformType, cifar_test_transform
+from mcp.data.dataset.transforms import TransformType, DefaultTransform
+
+# CIFAR statistics
+IMAGES_MEAN = (0.5071, 0.4867, 0.4408)
+IMAGES_STD = (0.2675, 0.2565, 0.2761)
 
 CLASSES_TRAIN = [
     "train",
@@ -120,7 +124,7 @@ class CifarFsDataset(Dataset):
         self,
         dataset: Dataset,
         classes_mapping: Dict[int, int],
-        transform: TransformType = cifar_test_transform,
+        transform: TransformType = DefaultTransform(IMAGES_MEAN, IMAGES_STD),
     ):
         self.dataset = dataset
         self.classes_mapping = classes_mapping
