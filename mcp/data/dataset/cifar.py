@@ -1,12 +1,11 @@
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
-import numpy as np
-import torch
 from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR100
 
 from mcp.data.dataset.dataset import ComposedDataset, DatasetLoader, IndexedDataset
+from mcp.data.dataset.transforms import TransformType, cifar_test_transform
 
 CLASSES_TRAIN = [
     "train",
@@ -117,9 +116,15 @@ CLASSES_TEST = [
 
 
 class CifarFsDataset(Dataset):
-    def __init__(self, dataset: Dataset, classes_mapping: Dict[int, int]):
+    def __init__(
+        self,
+        dataset: Dataset,
+        classes_mapping: Dict[int, int],
+        transform: TransformType = cifar_test_transform,
+    ):
         self.dataset = dataset
         self.classes_mapping = classes_mapping
+        self.transform = transform
 
     def __len__(self):
         return len(self.dataset)
@@ -128,9 +133,7 @@ class CifarFsDataset(Dataset):
         img, label = self.dataset[index]
 
         label = self.classes_mapping[label]
-        # We need to convert the image (PIL.Image) to numpy.ndarray
-        # before transforming it to torch.Tensor.
-        img = torch.as_tensor(np.array(img))
+        img = self.transform(img)
 
         return img, label
 
