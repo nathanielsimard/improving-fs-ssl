@@ -15,15 +15,11 @@ class DefaultTransform(object):
     def __init__(self, mean: FloatSequenceType, std: FloatSequenceType):
         super().__init__()
         self.transform = transforms.Compose(
-            [
-                lambda x: Image.fromarray(x),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std),
-            ]
+            [transforms.ToTensor(), transforms.Normalize(mean=mean, std=std)]
         )
 
-    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-        return self.transform(tensor)
+    def __call__(self, image: Image) -> torch.Tensor:
+        return self.transform(image)
 
 
 # CIFAR transformations
@@ -32,7 +28,6 @@ CIFAR_STD = (0.2675, 0.2565, 0.2761)
 # Train transform
 cifar_train_transform = transforms.Compose(
     [
-        lambda x: Image.fromarray(x),
         transforms.RandomCrop(32, padding=4),
         transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
         transforms.RandomHorizontalFlip(),
