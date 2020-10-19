@@ -1,12 +1,24 @@
 import abc
 from collections import defaultdict
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, NamedTuple, Tuple
 
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset
+
+
+class DataLoaderSplits(NamedTuple):
+    train: DataLoader
+    valid: DataLoader
+    test: DataLoader
+
+
+class DatasetSplits(NamedTuple):
+    train: Dataset
+    valid: Dataset
+    test: Dataset
 
 
 class DatasetLoader(abc.ABC):
-    def load(self, output_dir: str) -> Tuple[Dataset, Dataset, Dataset]:
+    def load(self, output_dir: str) -> DatasetSplits:
         """Load the dataset correctly splitted.
 
         The splits are (train, valid, test).

@@ -1,8 +1,8 @@
 from typing import Callable, Tuple, Union
-from PIL import Image
 
 import torch
 import torchvision.transforms as transforms
+from PIL import Image
 
 # Transforms can be a composition, a callable function or object
 TransformType = Union[transforms.Compose, Callable]

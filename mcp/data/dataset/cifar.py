@@ -1,11 +1,16 @@
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR100
 
-from mcp.data.dataset.dataset import ComposedDataset, DatasetLoader, IndexedDataset
-from mcp.data.dataset.transforms import TransformType, DefaultTransform
+from mcp.data.dataset.dataset import (
+    ComposedDataset,
+    DatasetLoader,
+    DatasetSplits,
+    IndexedDataset,
+)
+from mcp.data.dataset.transforms import DefaultTransform, TransformType
 
 # CIFAR statistics
 IMAGES_MEAN = (0.5071, 0.4867, 0.4408)
@@ -160,7 +165,7 @@ class CifarFsDatasetLoader(DatasetLoader):
         """
         self.convert_labels = convert_labels
 
-    def load(self, output_dir: str) -> Tuple[Dataset, Dataset, Dataset]:
+    def load(self, output_dir: str) -> DatasetSplits:
         cifar100_train = self._download(output_dir, train=True)
         cifar100_test = self._download(output_dir, train=False)
 
@@ -176,9 +181,7 @@ class CifarFsDatasetLoader(DatasetLoader):
         except Exception:
             return CIFAR100(output_dir, download=True, train=train)
 
-    def _split(
-        self, cifar100: Dataset, classes: List[str]
-    ) -> Tuple[Dataset, Dataset, Dataset]:
+    def _split(self, cifar100: Dataset, classes: List[str]) -> DatasetSplits:
         class_to_index: Dict[str, List[int]] = defaultdict(lambda: [])
 
         for i in range(len(cifar100)):
@@ -196,7 +199,7 @@ class CifarFsDatasetLoader(DatasetLoader):
             classes, CLASSES_TEST, cifar100, class_to_index
         )
 
-        return dataset_train, dataset_valid, dataset_test
+        return DatasetSplits(dataset_train, dataset_valid, dataset_test)
 
     def _create_dataset(
         self,

@@ -1,16 +1,30 @@
+from multiprocessing import cpu_count
 from typing import List, NamedTuple
 
+from mcp.config.dataloader import DataLoaderConfig
+from mcp.config.dataloader import parse as parse_dataloader
 from mcp.config.dataset import DatasetConfig
 from mcp.config.dataset import parse as parse_dataset
 from mcp.config.loader import ConfigType, merge
+from mcp.config.optimizer import OptimizerConfig
+from mcp.config.optimizer import parse as parse_optimizer
 
 DEFAULT_CONFIG: ConfigType = {
-    "dataset": {"source": "cifar_fs", "cifar_fs": {"convert_labels": True}}
+    "dataset": {"source": "cifar_fs", "cifar_fs": {"convert_labels": True}},
+    "dataloader": {"batch_size": 32, "shuffle": True, "num_workers": cpu_count()},
+    "optimizer": {
+        "type": "sgd",
+        "sgd": {"momentum": 0.9},
+        "weight_decay": 5e-4,
+        "learning_rate": 0.05,
+    },
 }
 
 
 class ExperimentConfig(NamedTuple):
     dataset: DatasetConfig
+    dataloader: DataLoaderConfig
+    optimizer: OptimizerConfig
 
 
 def parse(
@@ -27,4 +41,8 @@ def parse(
     for c in configs:
         config = merge(c, config)
 
-    return ExperimentConfig(dataset=parse_dataset(config))
+    return ExperimentConfig(
+        dataset=parse_dataset(config),
+        dataloader=parse_dataloader(config),
+        optimizer=parse_optimizer(config),
+    )
