@@ -1,15 +1,23 @@
-from typing import NewType
+from typing import List, NewType
 
 import torch
-from injector import Injector, Module, inject, provider, singleton
+from injector import Injector, Module, inject, multiprovider, provider, singleton
 from torch.utils.data import DataLoader
 
 from mcp.config.dataset import Source
 from mcp.config.optimizer import OptimizerType
 from mcp.config.parser import ExperimentConfig
+from mcp.config.trainer import TaskType
 from mcp.data.dataset.cifar import CifarFsDatasetLoader
-from mcp.data.dataset.dataset import DataLoaderSplits, DatasetLoader, DatasetSplits
-from mcp.model.resnet import MLP
+from mcp.data.dataset.dataset import (
+    DataLoaderSplits,
+    DatasetLoader,
+    DatasetMetadata,
+    DatasetSplits,
+)
+from mcp.model.resnet import ResNet18
+from mcp.task.base import Task
+from mcp.task.supervised import SupervisedTask
 from mcp.training.trainer import Trainer
 
 Model = NewType("Model", torch.nn.Module)
@@ -36,8 +44,8 @@ class ModelModule(Module):
     @provider
     @inject
     @singleton
-    def provide_model(self) -> Model:
-        return MLP()
+    def provide_model(self, dataset_metadata: DatasetMetadata) -> Model:
+        return ResNet18(dataset_metadata.train_num_class)
 
 
 class TrainerModule(Module):
@@ -46,13 +54,35 @@ class TrainerModule(Module):
         self.output_dir = output_dir
         self.device = device
 
+    @multiprovider
+    @inject
+    @singleton
+    def provide_tasks(self, injector: Injector) -> List[Task]:
+        return [injector.get(self._get_class(t)) for t in self.config.trainer.tasks]
+
+    @provider
+    @singleton
+    def provide_supervised_task(self) -> SupervisedTask:
+        return SupervisedTask()
+
     @provider
     @inject
     @singleton
     def provide_trainer(
-        self, optimizer: torch.optim.Optimizer, dataloader_splits: DataLoaderSplits
+        self,
+        model: Model,
+        optimizer: torch.optim.Optimizer,
+        dataloader_splits: DataLoaderSplits,
+        tasks: List[Task],
     ) -> Trainer:
-        return Trainer(optimizer, dataloader_splits.train, dataloader_splits.valid)
+        return Trainer(
+            model,
+            optimizer,
+            dataloader_splits.train,
+            dataloader_splits.valid,
+            tasks,
+            self.config.trainer.epochs,
+        )
 
     @provider
     @inject
@@ -70,12 +100,26 @@ class TrainerModule(Module):
                 f"Optimizer not yet supported {self.config.optimizer.type}"
             )
 
+    def _get_class(self, task: TaskType):
+        if task == TaskType.SUPERVISED:
+            return SupervisedTask
+        else:
+            raise ValueError(f"Task type not yet supported {task}")
+
 
 class DataModule(Module):
     def __init__(self, config: ExperimentConfig, output_dir: str, device: torch.device):
         self.config = config
         self.output_dir = output_dir
         self.device = device
+
+    @provider
+    @inject
+    @singleton
+    def provide_dataset_metadata(
+        self, dataset_loader: DatasetLoader
+    ) -> DatasetMetadata:
+        return dataset_loader.metadata
 
     @provider
     @inject
