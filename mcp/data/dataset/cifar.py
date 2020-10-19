@@ -7,6 +7,7 @@ from torchvision.datasets import CIFAR100
 from mcp.data.dataset.dataset import (
     ComposedDataset,
     DatasetLoader,
+    DatasetMetadata,
     DatasetSplits,
     IndexedDataset,
 )
@@ -164,6 +165,12 @@ class CifarFsDatasetLoader(DatasetLoader):
                                 - Test: 20 labels
         """
         self.convert_labels = convert_labels
+
+    @property
+    def metadata(self) -> DatasetMetadata:
+        return DatasetMetadata(
+            len(CLASSES_TRAIN), len(CLASSES_VALID), len(CLASSES_TEST)
+        )
 
     def load(self, output_dir: str) -> DatasetSplits:
         cifar100_train = self._download(output_dir, train=True)

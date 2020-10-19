@@ -17,7 +17,18 @@ class DatasetSplits(NamedTuple):
     test: Dataset
 
 
+class DatasetMetadata(NamedTuple):
+    train_num_class: int
+    valid_num_class: int
+    test_num_class: int
+
+
 class DatasetLoader(abc.ABC):
+    @abc.abstractproperty
+    def metadata(self) -> DatasetMetadata:
+        pass
+
+    @abc.abstractmethod
     def load(self, output_dir: str) -> DatasetSplits:
         """Load the dataset correctly splitted.
 

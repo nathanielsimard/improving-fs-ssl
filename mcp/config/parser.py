@@ -8,6 +8,8 @@ from mcp.config.dataset import parse as parse_dataset
 from mcp.config.loader import ConfigType, merge
 from mcp.config.optimizer import OptimizerConfig
 from mcp.config.optimizer import parse as parse_optimizer
+from mcp.config.trainer import TrainerConfig
+from mcp.config.trainer import parse as parse_trainer
 
 DEFAULT_CONFIG: ConfigType = {
     "dataset": {"source": "cifar_fs", "cifar_fs": {"convert_labels": True}},
@@ -18,6 +20,7 @@ DEFAULT_CONFIG: ConfigType = {
         "weight_decay": 5e-4,
         "learning_rate": 0.05,
     },
+    "trainer": {"epochs": 90, "tasks": ["supervised"]},
 }
 
 
@@ -25,6 +28,7 @@ class ExperimentConfig(NamedTuple):
     dataset: DatasetConfig
     dataloader: DataLoaderConfig
     optimizer: OptimizerConfig
+    trainer: TrainerConfig
 
 
 def parse(
@@ -45,4 +49,5 @@ def parse(
         dataset=parse_dataset(config),
         dataloader=parse_dataloader(config),
         optimizer=parse_optimizer(config),
+        trainer=parse_trainer(config),
     )
