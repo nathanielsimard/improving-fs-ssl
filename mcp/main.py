@@ -1,6 +1,14 @@
-def main():
-    print("Hello World")
+import torch
+
+from mcp.config.parser import ExperimentConfig
+from mcp.context import Model, create_injector
+from mcp.training.trainer import Trainer
 
 
-if __name__ == "__main__":
-    main()
+def run(config: ExperimentConfig, output_dir: str, device_str: str):
+    device = torch.device(device_str)
+    injector = create_injector(config, output_dir, device)
+
+    trainer = injector.get(Trainer)
+    model = injector.get(Model)
+    trainer.fit(model)

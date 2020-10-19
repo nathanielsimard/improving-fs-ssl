@@ -20,6 +20,14 @@ def parse_arguments():
         "-o", "--output", help="Path to the output directory.", type=str, required=True,
     )
     parser.add_argument(
+        "-d",
+        "--device",
+        help="Device to run on.",
+        type=str,
+        default="cuda",
+        choices=["cuda", "cpu"],
+    )
+    parser.add_argument(
         "-l",
         "--logging",
         help="Set the location of the logs. Possible values are 'std' and 'file'",
@@ -34,6 +42,7 @@ def parse_arguments():
 
 
 def run(args):
+    from mcp import main
     from mcp.config.loader import load, save, to_dict
     from mcp.config.parser import parse
 
@@ -43,7 +52,7 @@ def run(args):
     config_full = to_dict(config_experiment)
     save(config_full, os.path.join(args.output, "config_full.yml"))
 
-    print(config_experiment)
+    main.run(config_experiment, args.output, args.device)  # type: ignore
 
 
 def _initialize_logging(args):
