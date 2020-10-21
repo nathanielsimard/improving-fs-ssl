@@ -59,15 +59,6 @@ class Trainer(object):
             log_template = self._log_template(i + 1, epoch, dataloader, tag)
             self._step(tasks, x, y, log_template)
 
-    def _step(
-        self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
-    ):
-        self.optimizer.zero_grad()
-        outputs = self._compute(tasks, x, y, log_template)
-        loss: torch.Tensor = sum([o.loss for o in outputs])  # type: ignore
-        loss.backward()
-        self.optimizer.step()
-
     def _evaluate(self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag):
         self.model.eval()
         for task in tasks:
@@ -76,6 +67,15 @@ class Trainer(object):
         for i, (x, y) in enumerate(dataloader):
             log_template = self._log_template(i + 1, epoch, dataloader, tag)
             self._compute(tasks, x, y, log_template)
+
+    def _step(
+        self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
+    ):
+        self.optimizer.zero_grad()
+        outputs = self._compute(tasks, x, y, log_template)
+        loss: torch.Tensor = sum([o.loss for o in outputs])  # type: ignore
+        loss.backward()
+        self.optimizer.step()
 
     def _compute(
         self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
