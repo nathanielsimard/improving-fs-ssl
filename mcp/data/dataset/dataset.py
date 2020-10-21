@@ -5,10 +5,26 @@ from typing import Any, Dict, List, NamedTuple, Tuple
 from torch.utils.data import DataLoader, Dataset
 
 
-class DataLoaderSplits(NamedTuple):
+class FewShotDataset(NamedTuple):
+    support: Dataset
+    query: Dataset
+
+
+class FewShotDataLoader(NamedTuple):
+    support: DataLoader
+    query: DataLoader
+
+
+class FewShotDataLoaderSplits(NamedTuple):
     train: DataLoader
-    valid: DataLoader
-    test: DataLoader
+    valid: FewShotDataLoader
+    test: FewShotDataLoader
+
+
+class FewShotDatasetSplits(NamedTuple):
+    train: Dataset
+    valid: FewShotDataset
+    test: FewShotDataset
 
 
 class DatasetSplits(NamedTuple):
@@ -110,9 +126,7 @@ class IndexedDataset(Dataset):
         return item
 
 
-def create_few_shot_datasets(
-    dataset: Dataset, num_samples: int
-) -> Tuple[Dataset, Dataset]:
+def create_few_shot_datasets(dataset: Dataset, num_samples: int) -> FewShotDataset:
     """Split the dataset into a support and query dataset.
 
     The first dataset (support-set) contains 'num_samples' per classes in the original dataset, best used for training.
@@ -132,7 +146,7 @@ def create_few_shot_datasets(
             classes[clazz] += 1
             indexes_support.append(index)
 
-    return (
-        IndexedDataset(dataset, indexes_support),
-        IndexedDataset(dataset, indexes_query),
+    return FewShotDataset(
+        support=IndexedDataset(dataset, indexes_support),
+        query=IndexedDataset(dataset, indexes_query),
     )

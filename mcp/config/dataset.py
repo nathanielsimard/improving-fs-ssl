@@ -19,11 +19,15 @@ def _parse_cifar_fs(config: ConfigType) -> CifarFsConfig:
 
 class DatasetConfig(NamedTuple):
     source: Source
+    num_samples: int
     cifar_fs: CifarFsConfig
 
 
 def parse(config: ConfigType) -> DatasetConfig:
     config = config["dataset"]
+
     return DatasetConfig(
-        source=Source(config["source"]), cifar_fs=_parse_cifar_fs(config)
+        num_samples=config["num_samples"],
+        source=Source(config["source"]),
+        cifar_fs=_parse_cifar_fs(config),
     )

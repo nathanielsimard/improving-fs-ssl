@@ -1,7 +1,8 @@
 from typing import List
+import torch
 
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader
+from mcp.data.dataset.dataset import DataLoader, FewShotDataLoader
 
 from mcp.model.base import Model
 from mcp.task.base import Task
@@ -16,15 +17,17 @@ class Trainer(object):
         model: Model,
         optimizer: Optimizer,
         dataloader_train: DataLoader,
-        dataloader_valid: DataLoader,
-        tasks: List[Task],
+        dataloader_valid: FewShotDataLoader,
+        tasks_train: List[Task],
+        tasks_valid: List[Task],
         epochs: int,
     ):
         self.model = model
         self.optimizer = optimizer
         self.dataloader_train = dataloader_train
         self.dataloader_valid = dataloader_valid
-        self.tasks = tasks
+        self.tasks_train = tasks_train
+        self.tasks_valid = tasks_valid
         self.epochs = epochs
 
     def fit(self):
@@ -35,14 +38,34 @@ class Trainer(object):
         )
 
         for epoch in range(1, self.epochs + 1):
-            for i, (x, y) in enumerate(self.dataloader_train):
-                # Multi-task
-                self.optimizer.zero_grad()
-                losses = [task.run(self.model, x, y) for task in self.tasks]
-                loss = sum(losses)
-                loss.backward()
-                self.optimizer.step()
-                loss_info = [f"{t.name}: {l}" for t, l in zip(self.tasks, losses)]
-                logger.info(
-                    f"Epoch {epoch}/{self.epochs}, Batch {i+1}/{len(self.dataloader_train)}: {' | '.join(loss_info)}"
-                )
+            self._train(self.model, self.tasks_train, epoch, self.dataloader_train)
+            self._train(
+                self.model, self.tasks_valid, epoch, self.dataloader_valid.support
+            )
+
+    def _train(
+        self, model: Model, tasks: List[Task], epoch: int, dataloader: DataLoader
+    ):
+        for i, (x, y) in enumerate(dataloader):
+            # Multi-task
+            batch_id = i + 1
+            self._step(model, tasks, batch_id, epoch, x, y)
+
+    def _step(
+        self,
+        model: Model,
+        tasks: List[Task],
+        batch_id: int,
+        epoch: int,
+        x: torch.Tensor,
+        y: torch.Tensor,
+    ):
+        self.optimizer.zero_grad()
+        losses = [task.run(model, x, y) for task in tasks]
+        loss: torch.Tensor = sum(losses)  # type: ignore
+        loss.backward()
+        self.optimizer.step()
+        loss_info = [f"{t.name}: {l}" for t, l in zip(tasks, losses)]
+        logger.info(
+            f"Epoch {epoch}/{self.epochs}, Batch {batch_id}/{len(self.dataloader_train)}: {' | '.join(loss_info)}"
+        )

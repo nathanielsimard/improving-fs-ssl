@@ -10,10 +10,15 @@ from mcp.config.parser import ExperimentConfig
 from mcp.config.trainer import TaskType
 from mcp.data.dataset.cifar import CifarFsDatasetLoader
 from mcp.data.dataset.dataset import (
-    DataLoaderSplits,
+    FewShotDataLoaderSplits,
+    FewShotDatasetSplits,
+    FewShotDataLoader,
+    FewShotDataset,
+    Dataset,
     DatasetLoader,
     DatasetMetadata,
     DatasetSplits,
+    create_few_shot_datasets,
 )
 from mcp.model.resnet import ResNet18
 from mcp.task.base import Task
@@ -72,7 +77,7 @@ class TrainerModule(Module):
         self,
         model: Model,
         optimizer: torch.optim.Optimizer,
-        dataloader_splits: DataLoaderSplits,
+        dataloader_splits: FewShotDataLoaderSplits,
         tasks: List[Task],
     ) -> Trainer:
         return Trainer(
@@ -130,6 +135,21 @@ class DataModule(Module):
     @provider
     @inject
     @singleton
+    def provide_few_shot_dataset_splits(
+        self, dataset_splits: DatasetSplits
+    ) -> FewShotDatasetSplits:
+        valid = create_few_shot_datasets(
+            dataset_splits.valid, self.config.dataset.num_samples
+        )
+        test = create_few_shot_datasets(
+            dataset_splits.test, self.config.dataset.num_samples
+        )
+
+        return FewShotDatasetSplits(dataset_splits.train, valid, test)
+
+    @provider
+    @inject
+    @singleton
     def provide_dataset_loader(self) -> DatasetLoader:
         if self.config.dataset.source == Source.CIFAR_FS:
             return CifarFsDatasetLoader(self.config.dataset.cifar_fs.convert_labels)
@@ -141,10 +161,12 @@ class DataModule(Module):
     @provider
     @inject
     @singleton
-    def provider_dataloader(self, dataset_splits: DatasetSplits) -> DataLoaderSplits:
+    def provide_few_shot_dataloader_splits(
+        self, dataset_splits: FewShotDatasetSplits
+    ) -> FewShotDataLoaderSplits:
         pin_memory = True if self.device.type == "cuda" else False
 
-        def create(dataset):
+        def create(dataset: Dataset) -> DataLoader:
             return DataLoader(
                 dataset,
                 batch_size=self.config.dataloader.batch_size,
@@ -152,8 +174,13 @@ class DataModule(Module):
                 pin_memory=pin_memory,
             )
 
-        return DataLoaderSplits(
+        def create_few_shot(dataset: FewShotDataset) -> FewShotDataLoader:
+            return FewShotDataLoader(
+                support=create(dataset.support), query=create(dataset.query)
+            )
+
+        return FewShotDataLoaderSplits(
             create(dataset_splits.train),
-            create(dataset_splits.valid),
-            create(dataset_splits.test),
+            create_few_shot(dataset_splits.valid),
+            create_few_shot(dataset_splits.test),
         )

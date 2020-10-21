@@ -12,7 +12,11 @@ from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
 DEFAULT_CONFIG: ConfigType = {
-    "dataset": {"source": "cifar_fs", "cifar_fs": {"convert_labels": True}},
+    "dataset": {
+        "num_samples": 5,
+        "source": "cifar_fs",
+        "cifar_fs": {"convert_labels": True},
+    },
     "dataloader": {"batch_size": 32, "shuffle": True, "num_workers": cpu_count()},
     "optimizer": {
         "type": "sgd",
