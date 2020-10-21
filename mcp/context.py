@@ -1,4 +1,4 @@
-from typing import List, NewType
+from typing import NewType
 
 import torch
 from injector import Injector, Module, inject, multiprovider, provider, singleton
@@ -10,22 +10,23 @@ from mcp.config.parser import ExperimentConfig
 from mcp.config.trainer import TaskType
 from mcp.data.dataset.cifar import CifarFsDatasetLoader
 from mcp.data.dataset.dataset import (
-    FewShotDataLoaderSplits,
-    FewShotDatasetSplits,
-    FewShotDataLoader,
-    FewShotDataset,
     Dataset,
     DatasetLoader,
     DatasetMetadata,
     DatasetSplits,
+    FewShotDataLoader,
+    FewShotDataLoaderSplits,
+    FewShotDataset,
+    FewShotDatasetSplits,
     create_few_shot_datasets,
 )
+from mcp.model.base import Model
 from mcp.model.resnet import ResNet18
-from mcp.task.base import Task
 from mcp.task.supervised import SupervisedTask
 from mcp.training.trainer import Trainer
 
-Model = NewType("Model", torch.nn.Module)
+TasksTrain = NewType("TasksTrain", list)
+TasksValid = NewType("TasksValid", list)
 
 
 def create_injector(
@@ -49,8 +50,12 @@ class ModelModule(Module):
     @provider
     @inject
     @singleton
-    def provide_model(self, dataset_metadata: DatasetMetadata) -> Model:
-        return ResNet18(dataset_metadata.train_num_class)
+    def provide_model(self) -> Model:
+        return ResNet18(self.config.model.embedding_size)
+
+
+SupervisedTaskTrain = NewType("SupervisedTaskTrain", SupervisedTask)
+SupervisedTaskValid = NewType("SupervisedTaskValid", SupervisedTask)
 
 
 class TrainerModule(Module):
@@ -62,13 +67,38 @@ class TrainerModule(Module):
     @multiprovider
     @inject
     @singleton
-    def provide_tasks(self, injector: Injector) -> List[Task]:
-        return [injector.get(self._get_class(t)) for t in self.config.trainer.tasks]
+    def provide_train_tasks(self, injector: Injector) -> TasksTrain:
+        return [  # type: ignore
+            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks
+        ]
+
+    @multiprovider
+    @inject
+    @singleton
+    def provide_valid_tasks(self, injector: Injector) -> TasksValid:
+        return [  # type: ignore
+            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks
+        ]
 
     @provider
+    @inject
     @singleton
-    def provide_supervised_task(self) -> SupervisedTask:
-        return SupervisedTask()
+    def provide_train_supervised_task(
+        self, metadata: DatasetMetadata
+    ) -> SupervisedTaskTrain:
+        return SupervisedTask(  # type: ignore
+            self.config.model.embedding_size, metadata.train_num_class
+        )
+
+    @provider
+    @inject
+    @singleton
+    def provide_valid_supervised_task(
+        self, metadata: DatasetMetadata
+    ) -> SupervisedTaskValid:
+        return SupervisedTask(  # type: ignore
+            self.config.model.embedding_size, metadata.valid_num_class
+        )
 
     @provider
     @inject
@@ -78,14 +108,16 @@ class TrainerModule(Module):
         model: Model,
         optimizer: torch.optim.Optimizer,
         dataloader_splits: FewShotDataLoaderSplits,
-        tasks: List[Task],
+        tasks_train: TasksTrain,
+        tasks_valid: TasksValid,
     ) -> Trainer:
         return Trainer(
             model,
             optimizer,
             dataloader_splits.train,
             dataloader_splits.valid,
-            tasks,
+            tasks_train,
+            tasks_valid,
             self.config.trainer.epochs,
         )
 
@@ -105,11 +137,17 @@ class TrainerModule(Module):
                 f"Optimizer not yet supported {self.config.optimizer.type}"
             )
 
-    def _get_class(self, task: TaskType):
+    def _get_train_class(self, task: TaskType):
         if task == TaskType.SUPERVISED:
-            return SupervisedTask
+            return SupervisedTaskTrain
         else:
-            raise ValueError(f"Task type not yet supported {task}")
+            raise ValueError(f"Training Task type not yet supported {task}")
+
+    def _get_valid_class(self, task: TaskType):
+        if task == TaskType.SUPERVISED:
+            return SupervisedTaskValid
+        else:
+            raise ValueError(f"Valid Task type not yet supported {task}")
 
 
 class DataModule(Module):

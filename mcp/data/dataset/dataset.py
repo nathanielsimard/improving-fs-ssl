@@ -1,6 +1,6 @@
 import abc
 from collections import defaultdict
-from typing import Any, Dict, List, NamedTuple, Tuple
+from typing import Any, Dict, List, NamedTuple
 
 from torch.utils.data import DataLoader, Dataset
 
