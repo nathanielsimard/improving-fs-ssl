@@ -69,7 +69,7 @@ class TrainerModule(Module):
     @singleton
     def provide_train_tasks(self, injector: Injector) -> TasksTrain:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks
+            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks  # type: ignore
         ]
 
     @multiprovider
@@ -77,7 +77,7 @@ class TrainerModule(Module):
     @singleton
     def provide_valid_tasks(self, injector: Injector) -> TasksValid:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks
+            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks  # type: ignore
         ]
 
     @provider
