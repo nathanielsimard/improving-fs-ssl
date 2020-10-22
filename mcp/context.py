@@ -119,6 +119,7 @@ class TrainerModule(Module):
             tasks_train,
             tasks_valid,
             self.config.trainer.epochs,
+            self.device,
         )
 
     @provider

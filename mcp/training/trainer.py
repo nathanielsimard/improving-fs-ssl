@@ -21,6 +21,7 @@ class Trainer(object):
         tasks_train: List[Task],
         tasks_valid: List[Task],
         epochs: int,
+        device: torch.device,
     ):
         self.model = model
         self.optimizer = optimizer
@@ -29,8 +30,11 @@ class Trainer(object):
         self.tasks_train = tasks_train
         self.tasks_valid = tasks_valid
         self.epochs = epochs
+        self.device = device
 
     def fit(self):
+        self.model.to(self.device)
+
         logger.info(
             f"Fitting the model | {self.model.num_trainable_parameters()} parameters | "
             + f"{len(self.dataloader_train)} train batches | "
@@ -38,7 +42,10 @@ class Trainer(object):
         )
 
         for epoch in range(1, self.epochs + 1):
+            self.model.train()
             self._train(self.tasks_train, epoch, self.dataloader_train, "Training")
+
+            self.model.eval()
             self._train(
                 self.tasks_valid,
                 epoch,
@@ -50,17 +57,14 @@ class Trainer(object):
             )
 
     def _train(self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag: str):
-        self.model.train()
         for task in tasks:
             task.train()
 
         for i, (x, y) in enumerate(dataloader):
-            # Multi-task
             log_template = self._log_template(i + 1, epoch, dataloader, tag)
             self._step(tasks, x, y, log_template)
 
     def _evaluate(self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag):
-        self.model.eval()
         for task in tasks:
             task.eval()
 
@@ -72,15 +76,22 @@ class Trainer(object):
         self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
     ):
         self.optimizer.zero_grad()
+
         outputs = self._compute(tasks, x, y, log_template)
+
         loss: torch.Tensor = sum([o.loss for o in outputs])  # type: ignore
         loss.backward()
+
         self.optimizer.step()
 
     def _compute(
         self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
     ) -> List[TaskOutput]:
+        x = x.to(self.device)
+        y = y.to(self.device)
+
         outputs = [task.run(self.model, x, y) for task in tasks]
+
         info = [
             f"{t.name}: loss={o.loss:.3f} {o.metric_name}={o.metric:.3f}"
             for t, o in zip(tasks, outputs)
