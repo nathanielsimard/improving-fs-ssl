@@ -54,8 +54,11 @@ class Trainer(object):
 
     def _training_support_phase(self, epoch):
         self.model.eval()
-        for i in range(1, self.epochs + 1):
-            self._train(
+        loss = 1.0
+        i = 0
+        while loss > 0.002:
+            i += 1
+            loss = self._train(
                 self.tasks_valid,
                 epoch,
                 self.dataloader_valid.support,
@@ -68,13 +71,22 @@ class Trainer(object):
             self.tasks_valid, epoch, self.dataloader_valid.query, "Evaluation"
         )
 
-    def _train(self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag: str):
+    def _train(
+        self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag: str
+    ) -> float:
         for task in tasks:
             task.train()
 
+        losses = 0.0
+        total = 0.0
         for i, (x, y) in enumerate(dataloader):
             log_template = self._log_template(i + 1, epoch, dataloader, tag)
-            self._step(tasks, x, y, log_template)
+            outputs = self._step(tasks, x, y, log_template)
+
+            for o in outputs:
+                losses += o.loss.item()
+                total += 1.0
+        return losses / total
 
     def _evaluate(self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag):
         for task in tasks:
@@ -86,7 +98,7 @@ class Trainer(object):
 
     def _step(
         self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
-    ):
+    ) -> List[TaskOutput]:
         self.optimizer.zero_grad()
 
         outputs = self._compute(tasks, x, y, log_template)
@@ -95,6 +107,7 @@ class Trainer(object):
         loss.backward()
 
         self.optimizer.step()
+        return outputs
 
     def _compute(
         self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
