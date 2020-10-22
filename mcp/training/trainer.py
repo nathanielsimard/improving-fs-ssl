@@ -50,10 +50,12 @@ class Trainer(object):
 
     def _training_phase(self, epoch):
         self.model.train()
+        self.model.param.require_grad = True
         self._train(self.tasks_train, epoch, self.dataloader_train, "Training")
 
     def _training_support_phase(self, epoch):
         self.model.eval()
+        self.model.param.require_grad = False
         loss = 1.0
         i = 0
         while loss > 0.002:
