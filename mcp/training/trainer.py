@@ -58,7 +58,8 @@ class Trainer(object):
         self.model.freeze_weights()
         loss = 1.0
         i = 0
-        while loss > 0.002:
+        max_i = 50
+        while loss > 0.002 and i < max_i:
             i += 1
             loss = self._train(
                 self.tasks_valid,
