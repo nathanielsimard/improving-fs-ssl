@@ -44,19 +44,29 @@ class Trainer(object):
         )
 
         for epoch in range(1, self.epochs + 1):
-            self.model.train()
-            self._train(self.tasks_train, epoch, self.dataloader_train, "Training")
+            self._training_phase(epoch)
+            self._training_support_phase(epoch)
+            self._evaluation_phase(epoch)
 
-            self.model.eval()
+    def _training_phase(self, epoch):
+        self.model.train()
+        self._train(self.tasks_train, epoch, self.dataloader_train, "Training")
+
+    def _training_support_phase(self, epoch):
+        self.model.eval()
+        for i in range(1, self.epochs + 1):
             self._train(
                 self.tasks_valid,
                 epoch,
                 self.dataloader_valid.support,
-                "Training - Support",
+                f"Training - Support {i}",
             )
-            self._evaluate(
-                self.tasks_valid, epoch, self.dataloader_valid.query, "Evaluation"
-            )
+
+    def _evaluation_phase(self, epoch):
+        self.model.eval()
+        self._evaluate(
+            self.tasks_valid, epoch, self.dataloader_valid.query, "Evaluation"
+        )
 
     def _train(self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag: str):
         for task in tasks:
