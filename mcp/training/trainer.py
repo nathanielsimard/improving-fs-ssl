@@ -34,6 +34,8 @@ class Trainer(object):
 
     def fit(self):
         self.model.to(self.device)
+        for task in self.tasks_train + self.tasks_valid:
+            task.to(self.device)
 
         logger.info(
             f"Fitting the model | {self.model.num_trainable_parameters()} parameters | "
