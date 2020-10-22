@@ -125,10 +125,15 @@ class TrainerModule(Module):
     @provider
     @inject
     @singleton
-    def provide_optimizer(self, model: Model) -> torch.optim.Optimizer:
+    def provide_optimizer(
+        self, model: Model, tasks_train: TasksTrain, tasks_valid: TasksValid
+    ) -> torch.optim.Optimizer:
+        tasks_train_params = sum([p for p in tasks_train.parameters()])  # type: ignore
+        tasks_valid_params = sum([p for p in tasks_valid.parameters()])  # type: ignore
+
         if self.config.optimizer.type == OptimizerType.SGD:
             return torch.optim.SGD(
-                model.parameters(),
+                model.parameters() + tasks_train_params + tasks_valid_params,
                 lr=self.config.optimizer.learning_rate,
                 weight_decay=self.config.optimizer.weight_decay,
                 momentum=self.config.optimizer.sgd.momentum,
