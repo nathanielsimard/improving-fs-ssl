@@ -90,6 +90,9 @@ class Trainer(object):
         x = x.to(self.device)
         y = y.to(self.device)
 
+        print(x.device)
+        print(y.device)
+
         outputs = [task.run(self.model, x, y) for task in tasks]
 
         info = [
