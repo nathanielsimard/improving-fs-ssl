@@ -6,13 +6,19 @@ from mcp.config.dataloader import parse as parse_dataloader
 from mcp.config.dataset import DatasetConfig
 from mcp.config.dataset import parse as parse_dataset
 from mcp.config.loader import ConfigType, merge
+from mcp.config.model import ModelConfig
+from mcp.config.model import parse as parse_model
 from mcp.config.optimizer import OptimizerConfig
 from mcp.config.optimizer import parse as parse_optimizer
 from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
 DEFAULT_CONFIG: ConfigType = {
-    "dataset": {"source": "cifar_fs", "cifar_fs": {"convert_labels": True}},
+    "dataset": {
+        "num_samples": 5,
+        "source": "cifar_fs",
+        "cifar_fs": {"convert_labels": True},
+    },
     "dataloader": {"batch_size": 32, "shuffle": True, "num_workers": cpu_count()},
     "optimizer": {
         "type": "sgd",
@@ -21,6 +27,7 @@ DEFAULT_CONFIG: ConfigType = {
         "learning_rate": 0.05,
     },
     "trainer": {"epochs": 90, "tasks": ["supervised"]},
+    "model": {"embedding_size": 256},
 }
 
 
@@ -29,6 +36,7 @@ class ExperimentConfig(NamedTuple):
     dataloader: DataLoaderConfig
     optimizer: OptimizerConfig
     trainer: TrainerConfig
+    model: ModelConfig
 
 
 def parse(
@@ -50,4 +58,5 @@ def parse(
         dataloader=parse_dataloader(config),
         optimizer=parse_optimizer(config),
         trainer=parse_trainer(config),
+        model=parse_model(config),
     )

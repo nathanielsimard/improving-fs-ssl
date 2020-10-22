@@ -1,18 +1,24 @@
 import abc
-from typing import Optional
+from typing import NamedTuple, Optional
 
 import torch
 from torch import nn
 
 
-class Task(abc.ABC):
+class TaskOutput(NamedTuple):
+    loss: torch.Tensor
+    metric: float
+    metric_name: str
+
+
+class Task(abc.ABC, nn.Module):
     @abc.abstractproperty
     def name(self) -> str:
         pass
 
     @abc.abstractmethod
     def run(
-        self, model: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
-        """Abstract task definition, receives model and input data with optional targets. Returns computed loss."""
+        self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None,
+    ) -> TaskOutput:
+        """Abstract task definition, receives encoder and input data with optional targets. Returns computed loss."""
         pass

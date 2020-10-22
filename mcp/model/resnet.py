@@ -5,9 +5,9 @@ from mcp.model.base import Model
 
 
 class ResNet18(Model):
-    def __init__(self, num_classes: int):
+    def __init__(self, embed_size: int):
         super().__init__()
-        self.model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes)
+        self.model = ResNet(BasicBlock, [2, 2, 2, 2], embed_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
