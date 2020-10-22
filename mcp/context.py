@@ -128,12 +128,19 @@ class TrainerModule(Module):
     def provide_optimizer(
         self, model: Model, tasks_train: TasksTrain, tasks_valid: TasksValid
     ) -> torch.optim.Optimizer:
-        tasks_train_params = sum([p.parameters() for p in tasks_train])  # type: ignore
-        tasks_valid_params = sum([p.parameters() for p in tasks_valid])  # type: ignore
+        if len(tasks_train) > 1:
+            tasks_train_params = sum([list(p.parameters()) for p in tasks_train])  # type: ignore
+        else:
+            tasks_train_params = list(tasks_train[0].parameters())
+
+        if len(tasks_train) > 1:
+            tasks_valid_params = sum([list(p.parameters()) for p in tasks_valid])  # type: ignore
+        else:
+            tasks_valid_params = list(tasks_valid[0].parameters())
 
         if self.config.optimizer.type == OptimizerType.SGD:
             return torch.optim.SGD(
-                model.parameters() + tasks_train_params + tasks_valid_params,
+                list(model.parameters()) + tasks_train_params + tasks_valid_params,
                 lr=self.config.optimizer.learning_rate,
                 weight_decay=self.config.optimizer.weight_decay,
                 momentum=self.config.optimizer.sgd.momentum,
