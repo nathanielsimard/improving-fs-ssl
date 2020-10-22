@@ -1,11 +1,11 @@
-from typing import NewType
+from typing import List, NewType
 
 import torch
 from injector import Injector, Module, inject, multiprovider, provider, singleton
 from torch.utils.data import DataLoader
 
 from mcp.config.dataset import Source
-from mcp.config.optimizer import OptimizerType
+from mcp.config.optimizer import OptimizerConfig, OptimizerType
 from mcp.config.parser import ExperimentConfig
 from mcp.config.trainer import TaskType
 from mcp.data.dataset.cifar import CifarFsDatasetLoader
@@ -27,6 +27,9 @@ from mcp.training.trainer import Trainer
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
+
+OptimizerTrain = NewType("OptimizerTrain", torch.optim.Optimizer)
+OptimizerSupport = NewType("OptimizerSupport", torch.optim.Optimizer)
 
 
 def create_injector(
@@ -106,14 +109,16 @@ class TrainerModule(Module):
     def provide_trainer(
         self,
         model: Model,
-        optimizer: torch.optim.Optimizer,
+        optimizer_train: OptimizerTrain,
+        optimizer_support: OptimizerSupport,
         dataloader_splits: FewShotDataLoaderSplits,
         tasks_train: TasksTrain,
         tasks_valid: TasksValid,
     ) -> Trainer:
         return Trainer(
             model,
-            optimizer,
+            optimizer_train,
+            optimizer_support,
             dataloader_splits.train,
             dataloader_splits.valid,
             tasks_train,
@@ -125,30 +130,39 @@ class TrainerModule(Module):
     @provider
     @inject
     @singleton
-    def provide_optimizer(
+    def provide_optimizer_train(
         self, model: Model, tasks_train: TasksTrain, tasks_valid: TasksValid
-    ) -> torch.optim.Optimizer:
-        if len(tasks_train) > 1:
-            tasks_train_params = sum([list(p.parameters()) for p in tasks_train])  # type: ignore
-        else:
-            tasks_train_params = list(tasks_train[0].parameters())
+    ) -> OptimizerTrain:
+        modules = [model] + tasks_train
+        parameters = self._merge_param(modules)
+        return self._create_optimizer(self.config.optimizer, parameters)
 
-        if len(tasks_train) > 1:
-            tasks_valid_params = sum([list(p.parameters()) for p in tasks_valid])  # type: ignore
-        else:
-            tasks_valid_params = list(tasks_valid[0].parameters())
+    @provider
+    @inject
+    @singleton
+    def provide_optimizer_support(
+        self, model: Model, tasks_valid: TasksValid
+    ) -> OptimizerSupport:
+        parameters = self._merge_param(tasks_valid)
+        return self._create_optimizer(self.config.optimizer, parameters)
 
-        if self.config.optimizer.type == OptimizerType.SGD:
-            return torch.optim.SGD(
-                list(model.parameters()) + tasks_train_params + tasks_valid_params,
-                lr=self.config.optimizer.learning_rate,
-                weight_decay=self.config.optimizer.weight_decay,
-                momentum=self.config.optimizer.sgd.momentum,
+    def _create_optimizer(self, config: OptimizerConfig, parameters):
+        if config.type == OptimizerType.SGD:
+            return torch.optim.SGD(  # type: ignore
+                parameters,
+                lr=config.learning_rate,
+                weight_decay=config.weight_decay,
+                momentum=config.sgd.momentum,
             )
         else:
             raise ValueError(
                 f"Optimizer not yet supported {self.config.optimizer.type}"
             )
+
+    def _merge_param(self, modules: List[torch.nn.Module]):
+        for module in modules:
+            for parameter in module.parameters():
+                yield parameter
 
     def _get_train_class(self, task: TaskType):
         if task == TaskType.SUPERVISED:

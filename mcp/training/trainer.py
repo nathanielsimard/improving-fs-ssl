@@ -15,7 +15,8 @@ class Trainer(object):
     def __init__(
         self,
         model: Model,
-        optimizer: Optimizer,
+        optimizer_train: Optimizer,
+        optimizer_support: Optimizer,
         dataloader_train: DataLoader,
         dataloader_valid: FewShotDataLoader,
         tasks_train: List[Task],
@@ -24,7 +25,8 @@ class Trainer(object):
         device: torch.device,
     ):
         self.model = model
-        self.optimizer = optimizer
+        self.optimizer_train = optimizer_train
+        self.optimizer_support = optimizer_support
         self.dataloader_train = dataloader_train
         self.dataloader_valid = dataloader_valid
         self.tasks_train = tasks_train
@@ -51,7 +53,13 @@ class Trainer(object):
     def _training_phase(self, epoch):
         self.model.train()
         self.model.defreeze_weights()
-        self._train(self.tasks_train, epoch, self.dataloader_train, "Training")
+        self._train(
+            self.tasks_train,
+            epoch,
+            self.dataloader_train,
+            "Training",
+            self.optimizer_train,
+        )
 
     def _training_support_phase(self, epoch):
         self.model.eval()
@@ -66,6 +74,7 @@ class Trainer(object):
                 epoch,
                 self.dataloader_valid.support,
                 f"Training - Support {i}",
+                self.optimizer_support,
             )
 
     def _evaluation_phase(self, epoch):
@@ -75,7 +84,12 @@ class Trainer(object):
         )
 
     def _train(
-        self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag: str
+        self,
+        tasks: List[Task],
+        epoch: int,
+        dataloader: DataLoader,
+        tag: str,
+        optimizer: Optimizer,
     ) -> float:
         for task in tasks:
             task.train()
@@ -84,7 +98,7 @@ class Trainer(object):
         total = 0.0
         for i, (x, y) in enumerate(dataloader):
             log_template = self._log_template(i + 1, epoch, dataloader, tag)
-            outputs = self._step(tasks, x, y, log_template)
+            outputs = self._step(tasks, x, y, log_template, optimizer)
 
             for o in outputs:
                 losses += o.loss.item()
@@ -100,16 +114,19 @@ class Trainer(object):
             self._compute(tasks, x, y, log_template)
 
     def _step(
-        self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
+        self,
+        tasks: List[Task],
+        x: torch.Tensor,
+        y: torch.Tensor,
+        log_template: str,
+        optimizer: Optimizer,
     ) -> List[TaskOutput]:
-        self.optimizer.zero_grad()
-
+        optimizer.zero_grad()
         outputs = self._compute(tasks, x, y, log_template)
-
         loss: torch.Tensor = sum([o.loss for o in outputs])  # type: ignore
         loss.backward()
+        optimizer.step()
 
-        self.optimizer.step()
         return outputs
 
     def _compute(
