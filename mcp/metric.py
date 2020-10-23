@@ -14,4 +14,9 @@ class Accuracy(Metric):
         if logit:
             x = torch.argmax(x, dim=-1)
 
-        return 100.0 * torch.as_tensor(x == y, dtype=torch.float32).mean().item()
+        return (
+            100.0
+            * torch.as_tensor(x == y, dtype=torch.float32, device=x.device)
+            .mean()
+            .item()
+        )

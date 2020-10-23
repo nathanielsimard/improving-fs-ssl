@@ -15,3 +15,11 @@ class Model(abc.ABC, nn.Module):
     def load(self, file_path: str) -> None:
         """Load the model weights from disk."""
         self.load_state_dict(torch.load(file_path, map_location=self.device))
+
+    def freeze_weights(self):
+        for param in self.parameters():
+            param.requires_grad = False
+
+    def defreeze_weights(self):
+        for param in self.parameters():
+            param.requires_grad = True
