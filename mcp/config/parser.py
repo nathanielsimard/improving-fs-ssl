@@ -13,6 +13,12 @@ from mcp.config.optimizer import parse as parse_optimizer
 from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
+_DEFAULT_OPTIMIZER_CONFIG = {
+    "type": "sgd",
+    "sgd": {"momentum": 0.9},
+    "weight_decay": 5e-4,
+    "learning_rate": 0.05,
+}
 DEFAULT_CONFIG: ConfigType = {
     "dataset": {
         "num_samples": 5,
@@ -21,12 +27,14 @@ DEFAULT_CONFIG: ConfigType = {
     },
     "dataloader": {"batch_size": 32, "shuffle": True, "num_workers": cpu_count()},
     "optimizer": {
-        "type": "sgd",
-        "sgd": {"momentum": 0.9},
-        "weight_decay": 5e-4,
-        "learning_rate": 0.05,
+        "train": _DEFAULT_OPTIMIZER_CONFIG,
+        "support": _DEFAULT_OPTIMIZER_CONFIG,
     },
-    "trainer": {"epochs": 90, "tasks": ["supervised"]},
+    "trainer": {
+        "epochs": 90,
+        "tasks": ["supervised"],
+        "support_training": {"max_epochs": 50, "min_loss": 0.001},
+    },
     "model": {"embedding_size": 256},
 }
 

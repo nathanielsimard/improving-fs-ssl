@@ -5,7 +5,7 @@ from injector import Injector, Module, inject, multiprovider, provider, singleto
 from torch.utils.data import DataLoader
 
 from mcp.config.dataset import Source
-from mcp.config.optimizer import OptimizerConfig, OptimizerType
+from mcp.config.optimizer import _OptimizerConfig, OptimizerType
 from mcp.config.parser import ExperimentConfig
 from mcp.config.trainer import TaskType
 from mcp.data.dataset.cifar import CifarFsDatasetLoader
@@ -124,6 +124,8 @@ class TrainerModule(Module):
             tasks_train,
             tasks_valid,
             self.config.trainer.epochs,
+            self.config.trainer.support_training.max_epochs,
+            self.config.trainer.support_training.min_loss,
             self.device,
         )
 
@@ -135,7 +137,7 @@ class TrainerModule(Module):
     ) -> OptimizerTrain:
         modules = [model] + tasks_train
         parameters = self._merge_param(modules)
-        return self._create_optimizer(self.config.optimizer, parameters)
+        return self._create_optimizer(self.config.optimizer.train, parameters)
 
     @provider
     @inject
@@ -144,9 +146,9 @@ class TrainerModule(Module):
         self, model: Model, tasks_valid: TasksValid
     ) -> OptimizerSupport:
         parameters = self._merge_param(tasks_valid)
-        return self._create_optimizer(self.config.optimizer, parameters)
+        return self._create_optimizer(self.config.optimizer.support, parameters)
 
-    def _create_optimizer(self, config: OptimizerConfig, parameters):
+    def _create_optimizer(self, config: _OptimizerConfig, parameters):
         if config.type == OptimizerType.SGD:
             return torch.optim.SGD(  # type: ignore
                 parameters,
@@ -155,9 +157,7 @@ class TrainerModule(Module):
                 momentum=config.sgd.momentum,
             )
         else:
-            raise ValueError(
-                f"Optimizer not yet supported {self.config.optimizer.type}"
-            )
+            raise ValueError(f"Optimizer not yet supported {config.type}")
 
     def _merge_param(self, modules: List[torch.nn.Module]):
         for module in modules:

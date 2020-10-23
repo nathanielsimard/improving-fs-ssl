@@ -22,6 +22,8 @@ class Trainer(object):
         tasks_train: List[Task],
         tasks_valid: List[Task],
         epochs: int,
+        support_max_epochs: int,
+        support_min_loss: int,
         device: torch.device,
     ):
         self.model = model
@@ -32,6 +34,8 @@ class Trainer(object):
         self.tasks_train = tasks_train
         self.tasks_valid = tasks_valid
         self.epochs = epochs
+        self.support_max_epochs = support_max_epochs
+        self.support_min_loss = support_min_loss
         self.device = device
 
     def fit(self):
@@ -64,16 +68,20 @@ class Trainer(object):
     def _training_support_phase(self, epoch):
         self.model.eval()
         self.model.freeze_weights()
-        loss = 1.0
-        i = 0
-        max_i = 50
-        while loss > 0.002 and i < max_i:
-            i += 1
-            loss = self._train(
+
+        support_loss = 1.0
+        support_epoch = 0
+
+        while (
+            support_loss > self.support_min_loss
+            and support_epoch < self.support_max_epochs
+        ):
+            support_epoch += 1
+            support_loss = self._train(
                 self.tasks_valid,
                 epoch,
                 self.dataloader_valid.support,
-                f"Training - Support {i}",
+                f"Training - Support {support_epoch}",
                 self.optimizer_support,
             )
 
