@@ -1,4 +1,4 @@
-from typing import List, NamedTuple, Optional
+from typing import Optional
 
 import torch
 from torch import nn
