@@ -52,10 +52,6 @@ class SupervisedTask(Task):
             x = t(x)
         return x
 
-    def eval(self) -> nn.Module:
-        self._training = False
-        return super().eval()
-
-    def train(self) -> nn.Module:
-        self._training = True
-        return super().train()
+    def train(self, mode: bool = True):
+        self._training = mode
+        return super().train(mode)
