@@ -130,7 +130,7 @@ class CifarFsDataset(Dataset):
         self,
         dataset: Dataset,
         classes_mapping: Dict[int, int],
-        transform: TransformType = DefaultTransform(IMAGES_MEAN, IMAGES_STD),
+        transform: TransformType = DefaultTransform(),
     ):
         self.dataset = dataset
         self.classes_mapping = classes_mapping
