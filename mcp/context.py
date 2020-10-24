@@ -5,7 +5,7 @@ from injector import Injector, Module, inject, multiprovider, provider, singleto
 from torch.utils.data import DataLoader
 
 from mcp.config.dataset import Source
-from mcp.config.optimizer import _OptimizerConfig, OptimizerType
+from mcp.config.optimizer import OptimizerType, _OptimizerConfig
 from mcp.config.parser import ExperimentConfig
 from mcp.config.trainer import TaskType
 from mcp.data.dataset.cifar import CifarFsDatasetLoader
