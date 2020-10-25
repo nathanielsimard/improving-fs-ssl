@@ -2,8 +2,8 @@ dataset:
   source: cifar_fs
 optimizer:
   train:
-    learning_rate: 0.0005
-    type: adam
+    learning_rate: 0.05
+    type: sgd
   support:
-    learning_rate: 0.0005
-    type: adam
+    learning_rate: 0.05
+    type: sgd

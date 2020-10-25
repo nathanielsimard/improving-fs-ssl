@@ -4,7 +4,7 @@ import torch
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
-from mcp.data.dataset.dataset import DataLoader, FewShotDataLoader
+from mcp.data.dataloader.dataloader import DataLoader, FewShotDataLoader
 from mcp.model.base import Model
 from mcp.task.base import Task, TaskOutput
 from mcp.utils.logging import create_logger

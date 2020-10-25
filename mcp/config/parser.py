@@ -34,6 +34,7 @@ _SUPPORT_SCHEDULER_CONFIG["type"] = "constant"
 DEFAULT_CONFIG: ConfigType = {
     "dataset": {
         "num_samples": 5,
+        "n_way": 5,
         "source": "cifar_fs",
         "cifar_fs": {"convert_labels": True},
     },
@@ -49,7 +50,7 @@ DEFAULT_CONFIG: ConfigType = {
     "trainer": {
         "epochs": 90,
         "tasks": ["supervised"],
-        "support_training": {"max_epochs": 50, "min_loss": 0.001},
+        "support_training": {"max_epochs": 150, "min_loss": 0.001},
     },
     "model": {"embedding_size": 256},
 }
