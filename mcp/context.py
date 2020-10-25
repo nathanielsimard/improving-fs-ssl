@@ -167,6 +167,10 @@ class TrainerModule(Module):
                 weight_decay=config.weight_decay,
                 momentum=config.sgd.momentum,
             )
+        elif config.type == OptimizerType.ADAM:
+            return torch.optim.Adam(  # type: ignore
+                parameters, lr=config.learning_rate, weight_decay=config.weight_decay,
+            )
         else:
             raise ValueError(f"Optimizer not yet supported {config.type}")
 
