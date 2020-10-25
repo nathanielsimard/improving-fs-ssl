@@ -22,6 +22,7 @@ _DEFAULT_OPTIMIZER_CONFIG = {
 DEFAULT_CONFIG: ConfigType = {
     "dataset": {
         "num_samples": 5,
+        "n_way": 5,
         "source": "cifar_fs",
         "cifar_fs": {"convert_labels": True},
     },

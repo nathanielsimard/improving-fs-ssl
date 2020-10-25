@@ -2,23 +2,12 @@ import abc
 from collections import defaultdict
 from typing import Any, Dict, List, NamedTuple
 
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
 
 class FewShotDataset(NamedTuple):
     support: Dataset
     query: Dataset
-
-
-class FewShotDataLoader(NamedTuple):
-    support: DataLoader
-    query: DataLoader
-
-
-class FewShotDataLoaderSplits(NamedTuple):
-    train: DataLoader
-    valid: FewShotDataLoader
-    test: FewShotDataLoader
 
 
 class FewShotDatasetSplits(NamedTuple):

@@ -2,21 +2,21 @@ from typing import List, NewType
 
 import torch
 from injector import Injector, Module, inject, multiprovider, provider, singleton
-from torch.utils.data import DataLoader
 
 from mcp.config.dataset import Source
 from mcp.config.optimizer import OptimizerType, _OptimizerConfig
 from mcp.config.parser import ExperimentConfig
 from mcp.config.trainer import TaskType
+from mcp.data.dataloader.dataloader import (
+    DataLoaderFactory,
+    FewShotDataLoaderFactory,
+    FewShotDataLoaderSplits,
+)
 from mcp.data.dataset import cifar
 from mcp.data.dataset.dataset import (
-    Dataset,
     DatasetLoader,
     DatasetMetadata,
     DatasetSplits,
-    FewShotDataLoader,
-    FewShotDataLoaderSplits,
-    FewShotDataset,
     FewShotDatasetSplits,
     create_few_shot_datasets,
 )
@@ -188,6 +188,14 @@ class TrainerModule(Module):
             raise ValueError(f"Valid Task type not yet supported {task}")
 
 
+ValidFewShotDataLoaderFactory = NewType(
+    "ValidFewShotDataLoaderFactory", FewShotDataLoaderFactory
+)
+TestFewShotDataLoaderFactory = NewType(
+    "TestFewShotDataLoaderFactory", FewShotDataLoaderFactory
+)
+
+
 class DataModule(Module):
     def __init__(self, config: ExperimentConfig, output_dir: str, device: torch.device):
         self.config = config
@@ -237,28 +245,52 @@ class DataModule(Module):
             )
 
     @provider
+    @singleton
+    def provide_dataloader_factory(self) -> DataLoaderFactory:
+        pin_memory = True if self.device.type == "cuda" else False
+
+        return DataLoaderFactory(
+            self.config.dataloader.batch_size,
+            self.config.dataloader.shuffle,
+            pin_memory,
+        )
+
+    @provider
+    @inject
+    @singleton
+    def provide_valid_few_shot_dataloader_factory(
+        self, dataloader_factory: DataLoaderFactory, dataset_metadata: DatasetMetadata
+    ) -> ValidFewShotDataLoaderFactory:
+        return FewShotDataLoaderFactory(  # type: ignore
+            dataset_metadata.valid_num_class,
+            self.config.dataset.n_way,
+            dataloader_factory,
+        )
+
+    @provider
+    @inject
+    @singleton
+    def provide_few_shot_dataloader_factory(
+        self, dataloader_factory: DataLoaderFactory, dataset_metadata: DatasetMetadata
+    ) -> TestFewShotDataLoaderFactory:
+        return FewShotDataLoaderFactory(  # type: ignore
+            dataset_metadata.test_num_class,
+            self.config.dataset.n_way,
+            dataloader_factory,
+        )
+
+    @provider
     @inject
     @singleton
     def provide_few_shot_dataloader_splits(
-        self, dataset_splits: FewShotDatasetSplits
+        self,
+        dataset_splits: FewShotDatasetSplits,
+        dataloader_factory: DataLoaderFactory,
+        test_dt: TestFewShotDataLoaderFactory,
+        valid_dt: ValidFewShotDataLoaderFactory,
     ) -> FewShotDataLoaderSplits:
-        pin_memory = True if self.device.type == "cuda" else False
-
-        def create(dataset: Dataset) -> DataLoader:
-            return DataLoader(
-                dataset,
-                batch_size=self.config.dataloader.batch_size,
-                shuffle=self.config.dataloader.shuffle,
-                pin_memory=pin_memory,
-            )
-
-        def create_few_shot(dataset: FewShotDataset) -> FewShotDataLoader:
-            return FewShotDataLoader(
-                support=create(dataset.support), query=create(dataset.query)
-            )
-
         return FewShotDataLoaderSplits(
-            create(dataset_splits.train),
-            create_few_shot(dataset_splits.valid),
-            create_few_shot(dataset_splits.test),
+            dataloader_factory.create(dataset_splits.train),
+            valid_dt.create(dataset_splits.valid),
+            test_dt.create(dataset_splits.test),
         )
