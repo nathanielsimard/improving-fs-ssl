@@ -35,7 +35,7 @@ class SupervisedTask(Task):
         if y is None:
             raise ValueError("Labels are required for supervised task")
 
-        x = self._transform(x)
+        # x = self._transform(x)
         x = encoder(x)
         x = self.output(x)
 

@@ -56,7 +56,7 @@ class Trainer(object):
 
     def _training_phase(self, epoch):
         self.model.train()
-        self.model.defreeze_weights()
+        # self.model.defreeze_weights()
         self._train(
             self.tasks_train,
             epoch,
@@ -67,7 +67,7 @@ class Trainer(object):
 
     def _training_support_phase(self, epoch):
         self.model.eval()
-        self.model.freeze_weights()
+        # self.model.freeze_weights()
 
         support_loss = 1.0
         support_epoch = 0
