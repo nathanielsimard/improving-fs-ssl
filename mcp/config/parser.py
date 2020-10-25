@@ -1,3 +1,4 @@
+from copy import deepcopy
 from multiprocessing import cpu_count
 from typing import List, NamedTuple
 
@@ -10,6 +11,8 @@ from mcp.config.model import ModelConfig
 from mcp.config.model import parse as parse_model
 from mcp.config.optimizer import OptimizerConfig
 from mcp.config.optimizer import parse as parse_optimizer
+from mcp.config.scheduler import SchedulerConfig
+from mcp.config.scheduler import parse as parse_scheduler
 from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
@@ -19,6 +22,15 @@ _DEFAULT_OPTIMIZER_CONFIG = {
     "weight_decay": 5e-4,
     "learning_rate": 0.05,
 }
+
+_DEFAULT_SCHEDULER_CONFIG = {
+    "type": "multistep",
+    "multistep": {"milestones": [45, 60, 75], "gamma": 0.1},
+}
+
+_SUPPORT_SCHEDULER_CONFIG = deepcopy(_DEFAULT_SCHEDULER_CONFIG)
+_SUPPORT_SCHEDULER_CONFIG["type"] = "constant"
+
 DEFAULT_CONFIG: ConfigType = {
     "dataset": {
         "num_samples": 5,
@@ -30,6 +42,10 @@ DEFAULT_CONFIG: ConfigType = {
     "optimizer": {
         "train": _DEFAULT_OPTIMIZER_CONFIG,
         "support": _DEFAULT_OPTIMIZER_CONFIG,
+    },
+    "scheduler": {
+        "train": _DEFAULT_SCHEDULER_CONFIG,
+        "support": _SUPPORT_SCHEDULER_CONFIG,
     },
     "trainer": {
         "epochs": 90,
@@ -44,6 +60,7 @@ class ExperimentConfig(NamedTuple):
     dataset: DatasetConfig
     dataloader: DataLoaderConfig
     optimizer: OptimizerConfig
+    scheduler: SchedulerConfig
     trainer: TrainerConfig
     model: ModelConfig
 
@@ -66,6 +83,7 @@ def parse(
         dataset=parse_dataset(config),
         dataloader=parse_dataloader(config),
         optimizer=parse_optimizer(config),
+        scheduler=parse_scheduler(config),
         trainer=parse_trainer(config),
         model=parse_model(config),
     )

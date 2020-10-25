@@ -224,14 +224,15 @@ class CifarFsDatasetLoader(DatasetLoader):
         self, classes_total: List[str], classes_split: List[str], dataset: Dataset
     ) -> Dataset:
         mapping = {}
-        current_index = 0
 
         for i, clazz in enumerate(classes_total):
             if not self.convert_labels:
                 mapping[i] = i
-            elif clazz in classes_split:
-                mapping[i] = current_index
-                current_index += 1
+            else:
+                try:
+                    mapping[i] = classes_split.index(clazz)
+                except ValueError:
+                    continue
 
         return CifarFsDataset(dataset, mapping)
 
