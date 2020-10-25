@@ -17,9 +17,9 @@ class SupervisedTask(Task):
         self.output = nn.Linear(embedding_size, num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.transforms_train = [
-            transforms.random_crop(),
-            transforms.color_jitter(),
-            transforms.random_flip(),
+            # transforms.random_crop(),
+            # transforms.color_jitter(),
+            # transforms.random_flip(),
             transforms.normalize(),
         ]
         self.transforms_eval = [transforms.normalize()]
@@ -35,7 +35,7 @@ class SupervisedTask(Task):
         if y is None:
             raise ValueError("Labels are required for supervised task")
 
-        # x = self._transform(x)
+        x = self._transform(x)
         x = encoder(x)
         x = self.output(x)
 
