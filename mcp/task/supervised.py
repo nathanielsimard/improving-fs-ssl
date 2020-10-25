@@ -22,9 +22,7 @@ class SupervisedTask(Task):
             transforms.random_flip(),
             transforms.normalize(),
         ]
-        self.transforms_eval = [
-            transforms.normalize()
-        ]
+        self.transforms_eval = [transforms.normalize()]
         self._training = True
 
     @property
