@@ -17,9 +17,9 @@ class SupervisedTask(Task):
         self.output = nn.Linear(embedding_size, num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.transforms_train = [
-            # transforms.random_crop(),
-            # transforms.color_jitter(),
-            # transforms.random_flip(),
+            transforms.random_crop(),
+            transforms.color_jitter(),
+            transforms.random_flip(),
             transforms.normalize(),
         ]
         self.transforms_eval = [transforms.normalize()]
