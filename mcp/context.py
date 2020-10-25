@@ -8,7 +8,7 @@ from mcp.config.dataset import Source
 from mcp.config.optimizer import OptimizerType, _OptimizerConfig
 from mcp.config.parser import ExperimentConfig
 from mcp.config.trainer import TaskType
-from mcp.data.dataset.cifar import CifarFsDatasetLoader
+from mcp.data.dataset import cifar
 from mcp.data.dataset.dataset import (
     Dataset,
     DatasetLoader,
@@ -20,6 +20,7 @@ from mcp.data.dataset.dataset import (
     FewShotDatasetSplits,
     create_few_shot_datasets,
 )
+from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.model.base import Model
 from mcp.model.resnet import ResNet18
 from mcp.task.supervised import SupervisedTask
@@ -84,23 +85,33 @@ class TrainerModule(Module):
         ]
 
     @provider
+    @singleton
+    def provide_kornia_transformations(self) -> KorniaTransforms:
+        if self.config.dataset.source == Source.CIFAR_FS:
+            return KorniaTransforms(cifar.IMAGES_MEAN, cifar.IMAGES_STD, (32, 32), 4)
+        else:
+            raise ValueError(
+                f"Dataset source not yet supported {self.config.dataset.source}"
+            )
+
+    @provider
     @inject
     @singleton
     def provide_train_supervised_task(
-        self, metadata: DatasetMetadata
+        self, metadata: DatasetMetadata, transforms: KorniaTransforms
     ) -> SupervisedTaskTrain:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.train_num_class
+            self.config.model.embedding_size, metadata.train_num_class, transforms
         )
 
     @provider
     @inject
     @singleton
     def provide_valid_supervised_task(
-        self, metadata: DatasetMetadata
+        self, metadata: DatasetMetadata, transforms: KorniaTransforms
     ) -> SupervisedTaskValid:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.valid_num_class
+            self.config.model.embedding_size, metadata.valid_num_class, transforms
         )
 
     @provider
@@ -217,7 +228,9 @@ class DataModule(Module):
     @singleton
     def provide_dataset_loader(self) -> DatasetLoader:
         if self.config.dataset.source == Source.CIFAR_FS:
-            return CifarFsDatasetLoader(self.config.dataset.cifar_fs.convert_labels)
+            return cifar.CifarFsDatasetLoader(
+                self.config.dataset.cifar_fs.convert_labels
+            )
         else:
             raise ValueError(
                 f"Dataset source not yet supported {self.config.dataset.source}"
