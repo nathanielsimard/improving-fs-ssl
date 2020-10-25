@@ -2,6 +2,7 @@ from typing import List
 
 import torch
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 
 from mcp.data.dataset.dataset import DataLoader, FewShotDataLoader
 from mcp.model.base import Model
@@ -17,6 +18,8 @@ class Trainer(object):
         model: Model,
         optimizer_train: Optimizer,
         optimizer_support: Optimizer,
+        scheduler_train: _LRScheduler,
+        scheduler_support: _LRScheduler,
         dataloader_train: DataLoader,
         dataloader_valid: FewShotDataLoader,
         tasks_train: List[Task],
@@ -29,6 +32,8 @@ class Trainer(object):
         self.model = model
         self.optimizer_train = optimizer_train
         self.optimizer_support = optimizer_support
+        self.scheduler_train = scheduler_train
+        self.scheduler_support = scheduler_support
         self.dataloader_train = dataloader_train
         self.dataloader_valid = dataloader_valid
         self.tasks_train = tasks_train
@@ -63,6 +68,7 @@ class Trainer(object):
             "Training",
             self.optimizer_train,
         )
+        self.scheduler_train.step()
 
     def _training_support_phase(self, epoch):
         self.model.eval()
@@ -82,6 +88,7 @@ class Trainer(object):
                 f"Training - Support {support_epoch}",
                 self.optimizer_support,
             )
+            self.scheduler_support.step()
 
     def _evaluation_phase(self, epoch):
         self.model.eval()

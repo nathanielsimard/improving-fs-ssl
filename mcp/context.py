@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from mcp.config.dataset import Source
 from mcp.config.optimizer import OptimizerType, _OptimizerConfig
 from mcp.config.parser import ExperimentConfig
+from mcp.config.scheduler import SchedulerType, _SchedulerConfig
 from mcp.config.trainer import TaskType
 from mcp.data.dataset import cifar
 from mcp.data.dataset.dataset import (
@@ -31,6 +32,8 @@ TasksValid = NewType("TasksValid", list)
 
 OptimizerTrain = NewType("OptimizerTrain", torch.optim.Optimizer)
 OptimizerSupport = NewType("OptimizerSupport", torch.optim.Optimizer)
+SchedulerTrain = NewType("SchedulerTrain", torch.optim.lr_scheduler._LRScheduler)
+SchedulerSupport = NewType("SchedulerSupport", torch.optim.lr_scheduler._LRScheduler)
 
 
 def create_injector(
@@ -122,6 +125,8 @@ class TrainerModule(Module):
         model: Model,
         optimizer_train: OptimizerTrain,
         optimizer_support: OptimizerSupport,
+        scheduler_train: SchedulerTrain,
+        scheduler_support: SchedulerSupport,
         dataloader_splits: FewShotDataLoaderSplits,
         tasks_train: TasksTrain,
         tasks_valid: TasksValid,
@@ -130,6 +135,8 @@ class TrainerModule(Module):
             model,
             optimizer_train,
             optimizer_support,
+            scheduler_train,
+            scheduler_support,
             dataloader_splits.train,
             dataloader_splits.valid,
             tasks_train,
@@ -139,6 +146,22 @@ class TrainerModule(Module):
             self.config.trainer.support_training.min_loss,
             self.device,
         )
+
+    @provider
+    @inject
+    @singleton
+    def provide_optimizer_scheduler_train(
+        self, optimizer: OptimizerTrain
+    ) -> SchedulerTrain:
+        return self._create_scheduler(optimizer, self.config.scheduler.train)
+
+    @provider
+    @inject
+    @singleton
+    def provide_optimizer_scheduler_support(
+        self, optimizer: OptimizerSupport
+    ) -> SchedulerSupport:
+        return self._create_scheduler(optimizer, self.config.scheduler.support)
 
     @provider
     @inject
@@ -158,6 +181,20 @@ class TrainerModule(Module):
     ) -> OptimizerSupport:
         parameters = self._merge_param(tasks_valid)
         return self._create_optimizer(self.config.optimizer.support, parameters)
+
+    def _create_scheduler(
+        self, optimizer: torch.optim.Optimizer, config: _SchedulerConfig
+    ):
+        if config.type == SchedulerType.MULTI_STEP:
+            return torch.optim.lr_scheduler.MultiStepLR(
+                optimizer,
+                milestones=config.multistep.milestones,
+                gamma=config.multistep.gamma,
+            )
+        elif config.type == SchedulerType.CONSTANT:
+            return torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lambda _: 1.0)  # type: ignore
+        else:
+            raise ValueError(f"Scheduler not yet supported {config.type}")
 
     def _create_optimizer(self, config: _OptimizerConfig, parameters):
         if config.type == OptimizerType.SGD:
