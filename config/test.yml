@@ -1,2 +1,7 @@
 dataset:
   source: cifar_fs
+optimizer:
+  train:
+    type: adam
+  support:
+    type: adam
