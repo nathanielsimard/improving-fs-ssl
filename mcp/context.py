@@ -2,11 +2,6 @@ from typing import List, NewType
 
 import torch
 from injector import Injector, Module, inject, multiprovider, provider, singleton
-from torch.optim.lr_scheduler import (
-    MultiplicativeLR,  # type: ignore
-    MultiStepLR,
-    _LRScheduler,
-)
 from torch.utils.data import DataLoader
 
 from mcp.config.dataset import Source
@@ -37,8 +32,8 @@ TasksValid = NewType("TasksValid", list)
 
 OptimizerTrain = NewType("OptimizerTrain", torch.optim.Optimizer)
 OptimizerSupport = NewType("OptimizerSupport", torch.optim.Optimizer)
-SchedulerTrain = NewType("SchedulerTrain", _LRScheduler)
-SchedulerSupport = NewType("SchedulerSupport", _LRScheduler)
+SchedulerTrain = NewType("SchedulerTrain", torch.optim.lr_scheduler._LRScheduler)
+SchedulerSupport = NewType("SchedulerSupport", torch.optim.lr_scheduler._LRScheduler)
 
 
 def create_injector(
@@ -191,13 +186,13 @@ class TrainerModule(Module):
         self, optimizer: torch.optim.Optimizer, config: _SchedulerConfig
     ):
         if config.type == SchedulerType.MULTI_STEP:
-            return MultiStepLR(
+            return torch.optim.lr_scheduler.MultiStepLR(
                 optimizer,
                 milestones=config.multistep.milestones,
                 gamma=config.multistep.gamma,
             )
         elif config.type == SchedulerType.CONSTANT:
-            return MultiplicativeLR(optimizer, lr_lambda=lambda _: 1.0)
+            return torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lambda _: 1.0)  # type: ignore
         else:
             raise ValueError(f"Scheduler not yet supported {config.type}")
 
