@@ -3,7 +3,7 @@ dataset:
 optimizer:
   train:
     learning_rate: 0.0005
-    type: sgd
+    type: adam
   support:
     learning_rate: 0.0005
-    type: sgd
+    type: adam
