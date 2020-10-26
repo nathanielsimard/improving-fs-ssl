@@ -6,7 +6,8 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from mcp.data.dataloader.dataloader import DataLoader, FewShotDataLoader
 from mcp.model.base import Model
-from mcp.task.base import Task, TaskOutput
+from mcp.task.base import Task
+from mcp.training.loop import TrainingLogger, TrainingLoop
 from mcp.utils.logging import create_logger
 
 logger = create_logger(__name__)
@@ -27,6 +28,8 @@ class Trainer(object):
         epochs: int,
         support_max_epochs: int,
         support_min_loss: int,
+        training_loop: TrainingLoop,
+        training_logger: TrainingLogger,
         device: torch.device,
     ):
         self.model = model
@@ -39,8 +42,8 @@ class Trainer(object):
         self.tasks_train = tasks_train
         self.tasks_valid = tasks_valid
         self.epochs = epochs
-        self.support_max_epochs = support_max_epochs
-        self.support_min_loss = support_min_loss
+        self.training_loop = training_loop
+        self.training_logger = training_logger
         self.device = device
 
     def fit(self):
@@ -60,106 +63,30 @@ class Trainer(object):
             self._evaluation_phase(epoch)
 
     def _training_phase(self, epoch):
-        self.model.train()
-        self._train(
+        self.training_loop.fit_one(
+            self.model,
             self.tasks_train,
-            epoch,
             self.dataloader_train,
-            "Training",
             self.optimizer_train,
+            self.scheduler_train,
+            self.training_logger.with_tag(f"Training - {epoch}/{self.epochs}"),
+            train_model=True,
         )
-        self.scheduler_train.step()
 
     def _training_support_phase(self, epoch):
-        self.model.eval()
-
-        support_loss = 1.0
-        support_epoch = 0
-
-        while (
-            support_loss > self.support_min_loss
-            and support_epoch < self.support_max_epochs
-        ):
-            support_epoch += 1
-            support_loss = self._train(
-                self.tasks_valid,
-                epoch,
-                self.dataloader_valid.support,
-                f"Training - Support {support_epoch}",
-                self.optimizer_support,
-            )
-            self.scheduler_support.step()
-
-    def _evaluation_phase(self, epoch):
-        self.model.eval()
-        self._evaluate(
-            self.tasks_valid, epoch, self.dataloader_valid.query, "Evaluation"
+        self.training_loop.fit_support(
+            self.model,
+            self.tasks_valid,
+            self.dataloader_valid.support,
+            self.optimizer_support,
+            self.scheduler_support,
+            self.training_logger.with_tag(f"Training Support - {epoch}/{self.epochs}"),
         )
 
-    def _train(
-        self,
-        tasks: List[Task],
-        epoch: int,
-        dataloader: DataLoader,
-        tag: str,
-        optimizer: Optimizer,
-    ) -> float:
-        for task in tasks:
-            task.train()
-
-        losses = 0.0
-        total = 0.0
-        for i, (x, y) in enumerate(dataloader):
-            log_template = self._log_template(i + 1, epoch, dataloader, tag)
-            outputs = self._step(tasks, x, y, log_template, optimizer)
-
-            for o in outputs:
-                losses += o.loss.item()
-                total += 1.0
-        return losses / total
-
-    def _evaluate(self, tasks: List[Task], epoch: int, dataloader: DataLoader, tag):
-        for task in tasks:
-            task.eval()
-
-        for i, (x, y) in enumerate(dataloader):
-            log_template = self._log_template(i + 1, epoch, dataloader, tag)
-            self._compute(tasks, x, y, log_template)
-
-    def _step(
-        self,
-        tasks: List[Task],
-        x: torch.Tensor,
-        y: torch.Tensor,
-        log_template: str,
-        optimizer: Optimizer,
-    ) -> List[TaskOutput]:
-        optimizer.zero_grad()
-        outputs = self._compute(tasks, x, y, log_template)
-        loss: torch.Tensor = sum([o.loss for o in outputs])  # type: ignore
-        loss.backward()
-        optimizer.step()
-
-        return outputs
-
-    def _compute(
-        self, tasks: List[Task], x: torch.Tensor, y: torch.Tensor, log_template: str,
-    ) -> List[TaskOutput]:
-        x = x.to(self.device)
-        y = y.to(self.device)
-
-        outputs = [task.run(self.model, x, y) for task in tasks]
-
-        info = [
-            f"{t.name}: loss={o.loss:.3f} {o.metric_name}={o.metric:.3f}"
-            for t, o in zip(tasks, outputs)
-        ]
-
-        logger.info(f"{log_template} - {' | '.join(info)}")
-
-        return outputs
-
-    def _log_template(
-        self, batch_id: int, epoch: int, dataloader: DataLoader, tag: str
-    ):
-        return f"{tag} - Epoch {epoch}/{self.epochs} Batch {batch_id}/{len(dataloader)}"
+    def _evaluation_phase(self, epoch):
+        self.training_loop.evaluate(
+            self.model,
+            self.tasks_valid,
+            self.dataloader_valid.query,
+            self.training_logger.with_tag(f"Evaluation - {epoch}/{self.epochs}"),
+        )
