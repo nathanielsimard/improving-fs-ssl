@@ -15,7 +15,7 @@ def run(args):
     config_full = to_dict(config_experiment)
     save(config_full, os.path.join(args.output, "config_full.yml"))
 
-    main.run_train(config_experiment, args.output, args.device)  # type: ignore
+    main.run_train(config_experiment, args.output, args.device, checkpoint=args.epoch)  # type: ignore
 
 
 if __name__ == "__main__":

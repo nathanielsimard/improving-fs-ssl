@@ -18,6 +18,9 @@ def parse_train_arguments():
     parser.add_argument(
         "-o", "--output", help="Path to the output directory.", type=str, required=True,
     )
+    parser.add_argument(
+        "-e", "--epoch", help="Checkpoint epoch to load.", type=int, required=False,
+    )
     return parser.parse_args()
 
 

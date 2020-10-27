@@ -1,5 +1,7 @@
+import os
 from typing import List, NamedTuple
 
+import numpy as np
 import torch
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -35,6 +37,7 @@ class Trainer(object):
         training_loop: TrainingLoop,
         trainer_loggers: TrainerLoggers,
         device: torch.device,
+        save_path: str,
     ):
         self.model = model
         self.optimizer_train = optimizer_train
@@ -49,6 +52,10 @@ class Trainer(object):
         self.training_loop = training_loop
         self.logger = trainer_loggers
         self.device = device
+        self.save_path = save_path
+        self.num_checkpoints = 5
+        self.valid_losses: List[float] = []
+        self.checkpoints: List[int] = []
 
     def fit(self):
         self.model.to(self.device)
@@ -88,9 +95,52 @@ class Trainer(object):
         )
 
     def _evaluation_phase(self, epoch):
-        self.training_loop.evaluate(
+        loss = self.training_loop.evaluate(
             self.model,
             self.tasks_valid,
             self.dataloader_valid.query,
             self.logger.evaluation.epoch(epoch, self.epochs),
         )
+        self._save_checkpoint(epoch, loss)
+
+    def _save_checkpoint(self, epoch: int, loss: float):
+        self.valid_losses.append(loss)
+        self.checkpoints.append(epoch)
+        self.save(epoch)
+
+        idxs = np.argsort(np.asarray(self.valid_losses))
+        if len(idxs) > self.num_checkpoints:
+            idx = idxs[-1]
+            epoch = self.checkpoints[idx]
+
+            os.remove(self._trainer_path(epoch))
+            os.remove(self._model_path(epoch))
+
+            del self.valid_losses[idx]
+            del self.checkpoints[idx]
+
+    def save(self, epoch: int):
+        self.model.save(self._model_path(epoch))
+        torch.save(
+            {
+                "optimizer_state_dict": self.optimizer_train.state_dict(),
+                "scheduler_state_dict": self.scheduler_train.state_dict(),
+                "checkpoints": self.checkpoints,
+                "valid_losses": self.valid_losses,
+            },
+            self._trainer_path(epoch),
+        )
+
+    def load(self, epoch: int):
+        self.model.load(self._model_path(epoch))
+        trainer_checkpoint = torch.load(self._trainer_path(epoch))
+        self.optimizer_train.load_state_dict(trainer_checkpoint["optimizer_state_dict"])
+        self.scheduler_train.load_state_dict(trainer_checkpoint["scheduler_state_dict"])
+        self.checkpoints = trainer_checkpoint["checkpoints"]
+        self.valid_losses = trainer_checkpoint["valid_losses"]
+
+    def _model_path(self, epoch: int) -> str:
+        return os.path.join(self.save_path, f"model-{epoch}.pth")
+
+    def _trainer_path(self, epoch: int) -> str:
+        return os.path.join(self.save_path, f"trainer-{epoch}.pth")

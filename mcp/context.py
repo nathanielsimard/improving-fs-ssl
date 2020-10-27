@@ -221,6 +221,8 @@ class TrainerModule(Module):
         tasks_train: TasksTrain,
         tasks_valid: TasksValid,
     ) -> Trainer:
+        checkpoint_dir = os.path.join(self.output_dir, "checkpoints")
+        os.makedirs(checkpoint_dir, exist_ok=True)
         return Trainer(
             model,
             optimizer_train,
@@ -235,6 +237,7 @@ class TrainerModule(Module):
             training_loop,
             trainer_loggers,
             self.device,
+            checkpoint_dir,
         )
 
     @provider

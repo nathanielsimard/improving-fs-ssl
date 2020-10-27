@@ -116,6 +116,9 @@ class TrainingLoop(object):
     ):
         support_loss = 1.0
         support_epoch = 0
+        # Don't change default optimizer and scheduler states
+        optimizer = deepcopy(optimizer)
+        scheduler = deepcopy(scheduler)
 
         while (
             support_loss > self.support_min_loss
@@ -138,7 +141,7 @@ class TrainingLoop(object):
         tasks: List[Task],
         dataloader: DataLoader,
         training_logger: TrainingLogger,
-    ):
+    ) -> float:
         task_names = [t.name for t in tasks]
 
         model.eval()
@@ -146,9 +149,14 @@ class TrainingLoop(object):
         for task in tasks:
             task.eval()
 
+        running_loss = 0.0
+        total = 0
         for i, (x, y) in enumerate(dataloader):
             outputs = self._compute(model, tasks, x, y)
             training_logger.log(outputs, task_names, i + 1, len(dataloader))
+            running_loss += sum(o.loss.item() for o in outputs)
+            total += len(tasks)
+        return running_loss / total
 
     def _step(
         self,
