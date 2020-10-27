@@ -116,9 +116,10 @@ class TrainingLoop(object):
     ):
         support_loss = 1.0
         support_epoch = 0
+
         # Don't change default optimizer and scheduler states
-        optimizer = deepcopy(optimizer)
-        scheduler = deepcopy(scheduler)
+        optimizer_state_dict = optimizer.state_dict()
+        scheduler_state_dict = scheduler.state_dict()
 
         while (
             support_loss > self.support_min_loss
@@ -134,6 +135,9 @@ class TrainingLoop(object):
                 training_logger.epoch(support_epoch, self.support_max_epochs),
                 train_model=False,
             )
+
+        optimizer.load_state_dict(optimizer_state_dict)
+        scheduler.load_state_dict(scheduler_state_dict)
 
     def evaluate(
         self,
