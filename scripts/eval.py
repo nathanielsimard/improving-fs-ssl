@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from mcp.argparser import parse_eval_arguments, initialize_logging
 import os
+
+from mcp.argparser import initialize_logging, parse_eval_arguments
 
 
 def run(args):
@@ -17,6 +18,5 @@ def run(args):
 
 if __name__ == "__main__":
     args = parse_eval_arguments()
-    os.makedirs(args.output, exist_ok=True)
-    initialize_logging(args)
+    initialize_logging(args.logging, args.result, args.debug)
     run(args)

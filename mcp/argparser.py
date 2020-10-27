@@ -53,16 +53,14 @@ def _default_parser():
     return parser
 
 
-def initialize_logging(args):
+def initialize_logging(logging_tags, output, debug):
     from mcp.utils import logging
 
-    logging_file = "file" in args.logging
-    logging_std = "std" in args.logging
+    logging_file = "file" in logging_tags
+    logging_std = "std" in logging_tags
 
-    if logging_file and args.config is not None:
-        logging_file_path = os.path.join(args.output, "experiment.log")
-        logging.initialize(
-            file_name=logging_file_path, std=logging_std, debug=args.debug
-        )
+    if logging_file:
+        logging_file_path = os.path.join(output, "experiment.log")
+        logging.initialize(file_name=logging_file_path, std=logging_std, debug=debug)
     else:
-        logging.initialize(std=logging_std, debug=args.debug)
+        logging.initialize(std=logging_std, debug=debug)

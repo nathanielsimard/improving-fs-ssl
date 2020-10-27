@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, NamedTuple
 
 import torch
 from torch.optim import Optimizer
@@ -11,6 +11,12 @@ from mcp.training.loop import TrainingLogger, TrainingLoop
 from mcp.utils.logging import create_logger
 
 logger = create_logger(__name__)
+
+
+class TrainerLoggers(NamedTuple):
+    train: TrainingLogger
+    support: TrainingLogger
+    evaluation: TrainingLogger
 
 
 class Trainer(object):
@@ -26,10 +32,8 @@ class Trainer(object):
         tasks_train: List[Task],
         tasks_valid: List[Task],
         epochs: int,
-        support_max_epochs: int,
-        support_min_loss: int,
         training_loop: TrainingLoop,
-        training_logger: TrainingLogger,
+        trainer_loggers: TrainerLoggers,
         device: torch.device,
     ):
         self.model = model
@@ -43,7 +47,7 @@ class Trainer(object):
         self.tasks_valid = tasks_valid
         self.epochs = epochs
         self.training_loop = training_loop
-        self.training_logger = training_logger
+        self.logger = trainer_loggers
         self.device = device
 
     def fit(self):
@@ -69,7 +73,7 @@ class Trainer(object):
             self.dataloader_train,
             self.optimizer_train,
             self.scheduler_train,
-            self.training_logger.with_tag(f"Training - {epoch}/{self.epochs}"),
+            self.logger.train.epoch(epoch, self.epochs),
             train_model=True,
         )
 
@@ -80,7 +84,7 @@ class Trainer(object):
             self.dataloader_valid.support,
             self.optimizer_support,
             self.scheduler_support,
-            self.training_logger.with_tag(f"Training Support - {epoch}/{self.epochs}"),
+            self.logger.support.epoch(epoch, self.epochs),
         )
 
     def _evaluation_phase(self, epoch):
@@ -88,5 +92,5 @@ class Trainer(object):
             self.model,
             self.tasks_valid,
             self.dataloader_valid.query,
-            self.training_logger.with_tag(f"Evaluation - {epoch}/{self.epochs}"),
+            self.logger.evaluation.epoch(epoch, self.epochs),
         )

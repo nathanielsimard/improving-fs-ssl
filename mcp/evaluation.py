@@ -1,10 +1,18 @@
+from typing import NamedTuple
+
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
+
 from mcp.data.dataloader.dataloader import FewShotDataLoaderFactory
 from mcp.data.dataset.dataset import FewShotDataset
 from mcp.model.base import Model
-from mcp.training.loop import TrainingLogger, TrainingLoop
-from torch.nn.optim import Optimizer
 from mcp.task.base import Task
-from torch.optim.lr_scheduler import _LRScheduler
+from mcp.training.loop import TrainingLogger, TrainingLoop
+
+
+class EvaluationLoggers(NamedTuple):
+    support: TrainingLogger
+    evaluation: TrainingLogger
 
 
 class Evaluation(object):
@@ -17,7 +25,7 @@ class Evaluation(object):
         training_loop: TrainingLoop,
         optimizer: Optimizer,
         scheduler: _LRScheduler,
-        training_logger: TrainingLogger,
+        loggers: EvaluationLoggers,
     ):
         self.few_shot_dataloader_factory = few_shot_dataloader_factory
         self.few_shot_dataset = few_shot_dataset
@@ -26,7 +34,7 @@ class Evaluation(object):
         self.training_loop = training_loop
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.training_logger = training_logger
+        self.loggers = loggers
 
     def eval(self):
         dataloader = self.few_shot_dataloader_factory.create(self.few_shot_dataset)
@@ -36,11 +44,11 @@ class Evaluation(object):
             dataloader.support,
             self.optimizer,
             self.scheduler,
-            self.training_logger.with_tag("Training Support"),
+            self.loggers.support.epoch(1, 1),
         )
         self.training_loop.evaluate(
             self.model,
             [self.task],
             dataloader.query,
-            self.training_logger.with_tag("Evaluation"),
+            self.loggers.evaluation.epoch(1, 1),
         )
