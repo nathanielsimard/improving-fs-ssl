@@ -1,3 +1,4 @@
+import os
 from typing import List, NewType
 
 import torch
@@ -22,10 +23,12 @@ from mcp.data.dataset.dataset import (
     create_few_shot_datasets,
 )
 from mcp.data.dataset.transforms import KorniaTransforms
+from mcp.evaluation import Evaluation, EvaluationLoggers
 from mcp.model.base import Model
 from mcp.model.resnet import ResNet18
 from mcp.task.supervised import SupervisedTask
-from mcp.training.trainer import Trainer
+from mcp.training.loop import TrainingLoop
+from mcp.training.trainer import Trainer, TrainerLoggers, TrainingLogger
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
@@ -34,6 +37,13 @@ OptimizerTrain = NewType("OptimizerTrain", torch.optim.Optimizer)
 OptimizerSupport = NewType("OptimizerSupport", torch.optim.Optimizer)
 SchedulerTrain = NewType("SchedulerTrain", torch.optim.lr_scheduler._LRScheduler)
 SchedulerSupport = NewType("SchedulerSupport", torch.optim.lr_scheduler._LRScheduler)
+
+ValidFewShotDataLoaderFactory = NewType(
+    "ValidFewShotDataLoaderFactory", FewShotDataLoaderFactory
+)
+TestFewShotDataLoaderFactory = NewType(
+    "TestFewShotDataLoaderFactory", FewShotDataLoaderFactory
+)
 
 
 def create_injector(
@@ -44,6 +54,7 @@ def create_injector(
             TrainerModule(config, output_dir, device),
             DataModule(config, output_dir, device),
             ModelModule(config, output_dir, device),
+            EvaluationModule(config, output_dir, device),
         ]
     )
 
@@ -63,6 +74,58 @@ class ModelModule(Module):
 
 SupervisedTaskTrain = NewType("SupervisedTaskTrain", SupervisedTask)
 SupervisedTaskValid = NewType("SupervisedTaskValid", SupervisedTask)
+
+
+class EvaluationModule(Module):
+    def __init__(self, config: ExperimentConfig, output_dir: str, device: torch.device):
+        self.config = config
+        self.output_dir = output_dir
+        self.device = device
+
+    @provider
+    @singleton
+    def provide_evaluation_loggers(self) -> EvaluationLoggers:
+        output_dir = os.path.join(self.output_dir, "evaluation")
+        os.makedirs(output_dir, exist_ok=True)
+
+        return EvaluationLoggers(
+            support=TrainingLogger(
+                "Evaluation Support", os.path.join(output_dir, "support")
+            ),
+            evaluation=TrainingLogger(
+                "Evaluation Support", os.path.join(output_dir, "eval")
+            ),
+        )
+
+    @provider
+    @singleton
+    @inject
+    def provide_evaluation(
+        self,
+        dataloader_factory: TestFewShotDataLoaderFactory,
+        dataset_splits: FewShotDatasetSplits,
+        metadata: DatasetMetadata,
+        transforms: KorniaTransforms,
+        model: Model,
+        training_loop: TrainingLoop,
+        optimizer: OptimizerSupport,
+        scheduler: SchedulerSupport,
+        loggers: EvaluationLoggers,
+    ) -> Evaluation:
+        task = SupervisedTask(  # type: ignore
+            self.config.model.embedding_size, metadata.test_num_class, transforms
+        )
+
+        return Evaluation(
+            dataloader_factory,
+            dataset_splits.test,
+            model,
+            task,
+            training_loop,
+            optimizer,
+            scheduler,
+            loggers,
+        )
 
 
 class TrainerModule(Module):
@@ -118,6 +181,31 @@ class TrainerModule(Module):
         )
 
     @provider
+    @singleton
+    def provide_training_loop(self) -> TrainingLoop:
+        return TrainingLoop(
+            self.device,
+            self.config.trainer.support_training.min_loss,
+            self.config.trainer.support_training.max_epochs,
+        )
+
+    @provider
+    @singleton
+    def provide_training_loggers(self) -> TrainerLoggers:
+        output_dir = os.path.join(self.output_dir, "train")
+        os.makedirs(output_dir, exist_ok=True)
+
+        return TrainerLoggers(
+            train=TrainingLogger("Training", os.path.join(output_dir, "train")),
+            support=TrainingLogger(
+                "Training - Support", os.path.join(output_dir, "support")
+            ),
+            evaluation=TrainingLogger(
+                "Training - Evaluation", os.path.join(output_dir, "eval")
+            ),
+        )
+
+    @provider
     @inject
     @singleton
     def provide_trainer(
@@ -128,6 +216,8 @@ class TrainerModule(Module):
         scheduler_train: SchedulerTrain,
         scheduler_support: SchedulerSupport,
         dataloader_splits: FewShotDataLoaderSplits,
+        trainer_loggers: TrainerLoggers,
+        training_loop: TrainingLoop,
         tasks_train: TasksTrain,
         tasks_valid: TasksValid,
     ) -> Trainer:
@@ -142,8 +232,8 @@ class TrainerModule(Module):
             tasks_train,
             tasks_valid,
             self.config.trainer.epochs,
-            self.config.trainer.support_training.max_epochs,
-            self.config.trainer.support_training.min_loss,
+            training_loop,
+            trainer_loggers,
             self.device,
         )
 
@@ -227,14 +317,6 @@ class TrainerModule(Module):
             return SupervisedTaskValid
         else:
             raise ValueError(f"Valid Task type not yet supported {task}")
-
-
-ValidFewShotDataLoaderFactory = NewType(
-    "ValidFewShotDataLoaderFactory", FewShotDataLoaderFactory
-)
-TestFewShotDataLoaderFactory = NewType(
-    "TestFewShotDataLoaderFactory", FewShotDataLoaderFactory
-)
 
 
 class DataModule(Module):
