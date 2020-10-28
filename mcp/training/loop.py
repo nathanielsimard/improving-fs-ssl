@@ -120,6 +120,7 @@ class TrainingLoop(object):
         # Don't change default optimizer and scheduler states
         optimizer_state_dict = optimizer.state_dict()
         scheduler_state_dict = scheduler.state_dict()
+        model.freeze_weights()
 
         while (
             support_loss > self.support_min_loss
@@ -138,6 +139,7 @@ class TrainingLoop(object):
 
         optimizer.load_state_dict(optimizer_state_dict)
         scheduler.load_state_dict(scheduler_state_dict)
+        model.defreeze_weights()
 
     def evaluate(
         self,
@@ -149,6 +151,7 @@ class TrainingLoop(object):
         task_names = [t.name for t in tasks]
 
         model.eval()
+        model.freeze_weights()
 
         for task in tasks:
             task.eval()
@@ -160,6 +163,8 @@ class TrainingLoop(object):
             training_logger.log(outputs, task_names, i + 1, len(dataloader))
             running_loss += sum(o.loss.item() for o in outputs)
             total += len(tasks)
+
+        model.defreeze_weights()
         return running_loss / total
 
     def _step(

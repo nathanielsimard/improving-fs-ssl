@@ -70,8 +70,8 @@ class Trainer(object):
 
         for epoch in range(starting_epoch + 1, self.epochs + 1):
             self._training_phase(epoch)
-            # self._training_support_phase(epoch)
-            # self._evaluation_phase(epoch)
+            self._training_support_phase(epoch)
+            self._evaluation_phase(epoch)
 
     def _training_phase(self, epoch):
         self.training_loop.fit_one(
@@ -121,6 +121,9 @@ class Trainer(object):
 
     def save(self, epoch: int):
         self.model.save(self._model_path(epoch))
+        for task in self.tasks_train:
+            task.save(self._task_path(task.name, epoch))
+
         torch.save(
             {
                 "optimizer_state_dict": self.optimizer_train.state_dict(),
@@ -133,16 +136,23 @@ class Trainer(object):
 
     def load(self, epoch: int):
         self.model.load(self._model_path(epoch), self.device)
+        for task in self.tasks_train:
+            task.load(self._task_path(task.name, epoch), self.device)
+
         trainer_checkpoint = torch.load(
             self._trainer_path(epoch), map_location=self.device
         )
         self.optimizer_train.load_state_dict(trainer_checkpoint["optimizer_state_dict"])
         self.scheduler_train.load_state_dict(trainer_checkpoint["scheduler_state_dict"])
+
         self.checkpoints = trainer_checkpoint["checkpoints"]
         self.valid_losses = trainer_checkpoint["valid_losses"]
 
     def _model_path(self, epoch: int) -> str:
         return os.path.join(self.save_path, f"model-{epoch}.pth")
+
+    def _task_path(self, name: str, epoch: int) -> str:
+        return os.path.join(self.save_path, f"task-{name}-{epoch}.pth")
 
     def _trainer_path(self, epoch: int) -> str:
         return os.path.join(self.save_path, f"trainer-{epoch}.pth")
