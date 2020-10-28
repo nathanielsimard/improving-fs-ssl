@@ -147,7 +147,7 @@ class TrainerModule(Module):
     @singleton
     def provide_valid_tasks(self, injector: Injector) -> TasksValid:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks  # type: ignore
+            injector.get(SupervisedTaskValid)
         ]
 
     @provider
@@ -314,12 +314,6 @@ class TrainerModule(Module):
             return SupervisedTaskTrain
         else:
             raise ValueError(f"Training Task type not yet supported {task}")
-
-    def _get_valid_class(self, task: TaskType):
-        if task == TaskType.SUPERVISED:
-            return SupervisedTaskValid
-        else:
-            raise ValueError(f"Valid Task type not yet supported {task}")
 
 
 class DataModule(Module):
