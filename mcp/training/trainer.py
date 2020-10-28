@@ -77,7 +77,7 @@ class Trainer(object):
             # train_model_state = deepcopy(self.model.state_dict())
 
             # self._training_support_phase(epoch)
-            # self._evaluation_phase(epoch)
+            self._evaluation_phase(epoch)
 
             # self.optimizer_train.load_state_dict(train_optimizer_state)
             # self.scheduler_train.load_state_dict(train_scheduler_state)
