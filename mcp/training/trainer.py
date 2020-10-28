@@ -72,16 +72,19 @@ class Trainer(object):
         for epoch in range(starting_epoch + 1, self.epochs + 1):
             self._training_phase(epoch)
 
-            # train_optimizer_state = deepcopy(self.optimizer_train.state_dict())
-            # train_scheduler_state = deepcopy(self.scheduler_train.state_dict())
-            # train_model_state = deepcopy(self.model.state_dict())
+            train_optimizer_state = deepcopy(self.optimizer_train.state_dict())
+            train_scheduler_state = deepcopy(self.scheduler_train.state_dict())
+            train_model_state = deepcopy(self.model.state_dict())
+            train_task_states = [deepcopy(t.state_dict()) for t in self.tasks_train]
 
-            # self._training_support_phase(epoch)
+            self._training_support_phase(epoch)
             self._evaluation_phase(epoch)
 
-            # self.optimizer_train.load_state_dict(train_optimizer_state)
-            # self.scheduler_train.load_state_dict(train_scheduler_state)
-            # self.model.load_state_dict(train_model_state)
+            self.optimizer_train.load_state_dict(train_optimizer_state)
+            self.scheduler_train.load_state_dict(train_scheduler_state)
+            self.model.load_state_dict(train_model_state)
+            for s, t in zip(train_task_states, self.tasks_train):
+                t.load_state_dict(s)
 
     def _training_phase(self, epoch):
         self.training_loop.fit_one(
@@ -111,7 +114,7 @@ class Trainer(object):
             self.dataloader_valid.query,
             self.logger.evaluation.epoch(epoch, self.epochs),
         )
-        self._save_checkpoint(epoch, -epoch)
+        self._save_checkpoint(epoch, loss)
 
     def _save_checkpoint(self, epoch: int, loss: float):
         self.valid_losses.append(loss)
