@@ -12,9 +12,9 @@ class Model(abc.ABC, nn.Module):
         """Save the model weights to disk."""
         torch.save(self.state_dict(), file_path)
 
-    def load(self, file_path: str) -> None:
+    def load(self, file_path: str, device: torch.device) -> None:
         """Load the model weights from disk."""
-        self.load_state_dict(torch.load(file_path, map_location=self.device))
+        self.load_state_dict(torch.load(file_path, map_location=device))
 
     def freeze_weights(self):
         for param in self.parameters():

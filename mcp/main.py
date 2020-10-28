@@ -20,7 +20,9 @@ def run_train(
     trainer = injector.get(Trainer)
     if checkpoint is not None:
         trainer.load(checkpoint)
-    trainer.fit()
+        trainer.fit(starting_epoch=checkpoint)
+    else:
+        trainer.fit()
 
 
 def run_eval(config: ExperimentConfig, result_dir: str, device_str: str):

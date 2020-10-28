@@ -57,7 +57,7 @@ class Trainer(object):
         self.valid_losses: List[float] = []
         self.checkpoints: List[int] = []
 
-    def fit(self):
+    def fit(self, starting_epoch=0):
         self.model.to(self.device)
         for task in self.tasks_train + self.tasks_valid:
             task.to(self.device)
@@ -68,10 +68,10 @@ class Trainer(object):
             + f"{len(self.dataloader_valid)} valid batches"
         )
 
-        for epoch in range(1, self.epochs + 1):
+        for epoch in range(starting_epoch + 1, self.epochs + 1):
             self._training_phase(epoch)
-            self._training_support_phase(epoch)
-            self._evaluation_phase(epoch)
+            # self._training_support_phase(epoch)
+            # self._evaluation_phase(epoch)
 
     def _training_phase(self, epoch):
         self.training_loop.fit_one(
@@ -132,8 +132,10 @@ class Trainer(object):
         )
 
     def load(self, epoch: int):
-        self.model.load(self._model_path(epoch))
-        trainer_checkpoint = torch.load(self._trainer_path(epoch))
+        self.model.load(self._model_path(epoch), self.device)
+        trainer_checkpoint = torch.load(
+            self._trainer_path(epoch), map_location=self.device
+        )
         self.optimizer_train.load_state_dict(trainer_checkpoint["optimizer_state_dict"])
         self.scheduler_train.load_state_dict(trainer_checkpoint["scheduler_state_dict"])
         self.checkpoints = trainer_checkpoint["checkpoints"]
