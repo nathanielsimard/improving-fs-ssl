@@ -13,7 +13,7 @@ class TaskOutput(NamedTuple):
     metric_name: str
 
 
-class Task(abc.ABC, Model):
+class Task(Model):
     @abc.abstractproperty
     def name(self) -> str:
         pass
