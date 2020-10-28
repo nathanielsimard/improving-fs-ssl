@@ -118,8 +118,8 @@ class TrainingLoop(object):
         support_epoch = 0
 
         # Don't change default optimizer and scheduler states
-        optimizer_state_dict = optimizer.state_dict()
-        scheduler_state_dict = scheduler.state_dict()
+        optimizer_state_dict = deepcopy(optimizer.state_dict())
+        scheduler_state_dict = deepcopy(scheduler.state_dict())
         model.freeze_weights()
 
         while (
