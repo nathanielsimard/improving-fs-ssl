@@ -111,7 +111,7 @@ class Trainer(object):
             self.dataloader_valid.query,
             self.logger.evaluation.epoch(epoch, self.epochs),
         )
-        self._save_checkpoint(epoch, loss)
+        self._save_checkpoint(epoch, -epoch)
 
     def _save_checkpoint(self, epoch: int, loss: float):
         self.valid_losses.append(loss)
