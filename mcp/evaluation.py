@@ -1,4 +1,5 @@
 from typing import NamedTuple
+import torch
 import os
 
 from torch.optim import Optimizer
@@ -30,6 +31,7 @@ class Evaluation(object):
         loggers: EvaluationLoggers,
         num_iterations: int,
         save_path: str,
+        device: torch.device,
     ):
         self.few_shot_dataloader_factory = few_shot_dataloader_factory
         self.few_shot_dataset = few_shot_dataset
@@ -41,9 +43,10 @@ class Evaluation(object):
         self.loggers = loggers
         self.num_iterations = num_iterations
         self.save_path = save_path
+        self.device = device
 
     def eval(self, epoch: int):
-        self.model.load(self._model_path(epoch))
+        self.model.load(self._model_path(epoch), self.device)
         for i in range(1, self.num_iterations + 1):
             dataloader = self.few_shot_dataloader_factory.create(self.few_shot_dataset)
             self.training_loop.fit_support(

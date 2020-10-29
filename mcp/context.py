@@ -129,6 +129,7 @@ class EvaluationModule(Module):
             loggers,
             self.config.evaluation.num_iterations,
             checkpoint_dir(self.output_dir),
+            self.device,
         )
 
     @provider
