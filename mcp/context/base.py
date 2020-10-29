@@ -1,14 +1,23 @@
 import os
-from typing import List, NewType
+from typing import NewType
 
 import torch
 from injector import Injector, Module, inject, multiprovider, provider, singleton
 
 from mcp.config.dataset import Source
-from mcp.config.optimizer import OptimizerType, _OptimizerConfig
 from mcp.config.parser import ExperimentConfig
-from mcp.config.scheduler import SchedulerType, _SchedulerConfig
 from mcp.config.trainer import TaskType
+from mcp.context.optimizer import (
+    OptimizerModule,
+    OptimizerTest,
+    OptimizerTrain,
+    OptimizerValid,
+    SchedulerModule,
+    SchedulerTest,
+    SchedulerTrain,
+    SchedulerValid,
+)
+from mcp.context.task import TasksTrain, TasksValid, TaskTest
 from mcp.data.dataloader.dataloader import (
     DataLoaderFactory,
     FewShotDataLoaderFactory,
@@ -28,24 +37,9 @@ from mcp.model.base import Model
 from mcp.model.resnet import ResNet18
 from mcp.result.experiment import ExperimentResult
 from mcp.result.logger import ResultLogger
-from mcp.task.base import Task
 from mcp.task.supervised import SupervisedTask
 from mcp.training.loop import TrainingLoop
 from mcp.training.trainer import Trainer, TrainerLoggers
-
-TasksTrain = NewType("TasksTrain", list)
-TasksValid = NewType("TasksValid", list)
-TaskTest = NewType("TaskTest", Task)
-
-OptimizerTrain = NewType("OptimizerTrain", torch.optim.Optimizer)
-OptimizerSupport = NewType("OptimizerSupport", torch.optim.Optimizer)
-SchedulerTrain = NewType("SchedulerTrain", torch.optim.lr_scheduler._LRScheduler)
-SchedulerSupport = NewType("SchedulerSupport", torch.optim.lr_scheduler._LRScheduler)
-
-OptimizerEvaluation = NewType("OptimizerEvaluation", torch.optim.Optimizer)
-SchedulerEvaluation = NewType(
-    "SchedulerEvaluation", torch.optim.lr_scheduler._LRScheduler
-)
 
 ValidFewShotDataLoaderFactory = NewType(
     "ValidFewShotDataLoaderFactory", FewShotDataLoaderFactory
@@ -64,6 +58,8 @@ def create_injector(
             DataModule(config, output_dir, device),
             ModelModule(config, output_dir, device),
             EvaluationModule(config, output_dir, device),
+            OptimizerModule(config, output_dir, device),
+            SchedulerModule(config, output_dir, device),
         ]
     )
 
@@ -116,8 +112,8 @@ class EvaluationModule(Module):
         task: TaskTest,
         model: Model,
         training_loop: TrainingLoop,
-        optimizer: OptimizerEvaluation,
-        scheduler: SchedulerEvaluation,
+        optimizer: OptimizerTest,
+        scheduler: SchedulerTest,
         loggers: EvaluationLoggers,
     ) -> Evaluation:
         return Evaluation(
@@ -234,9 +230,9 @@ class TrainerModule(Module):
         self,
         model: Model,
         optimizer_train: OptimizerTrain,
-        optimizer_support: OptimizerSupport,
+        optimizer_support: OptimizerValid,
         scheduler_train: SchedulerTrain,
-        scheduler_support: SchedulerSupport,
+        scheduler_support: SchedulerValid,
         dataloader_splits: FewShotDataLoaderSplits,
         trainer_loggers: TrainerLoggers,
         training_loop: TrainingLoop,
@@ -259,91 +255,6 @@ class TrainerModule(Module):
             self.device,
             checkpoint_dir(self.output_dir),
         )
-
-    @provider
-    @inject
-    @singleton
-    def provide_optimizer_scheduler_train(
-        self, optimizer: OptimizerTrain
-    ) -> SchedulerTrain:
-        return self._create_scheduler(optimizer, self.config.scheduler.train)
-
-    @provider
-    @inject
-    @singleton
-    def provide_optimizer_scheduler_support(
-        self, optimizer: OptimizerSupport
-    ) -> SchedulerSupport:
-        return self._create_scheduler(optimizer, self.config.scheduler.support)
-
-    @provider
-    @inject
-    @singleton
-    def provide_optimizer_scheduler_eval(
-        self, optimizer: OptimizerEvaluation
-    ) -> SchedulerEvaluation:
-        return self._create_scheduler(optimizer, self.config.scheduler.support)
-
-    @provider
-    @inject
-    @singleton
-    def provide_optimizer_train(
-        self, model: Model, tasks_train: TasksTrain, tasks_valid: TasksValid
-    ) -> OptimizerTrain:
-        modules = [model] + tasks_train
-        parameters = self._merge_param(modules)
-        return self._create_optimizer(self.config.optimizer.train, parameters)
-
-    @provider
-    @inject
-    @singleton
-    def provide_optimizer_eval(
-        self, model: Model, task: TaskTest
-    ) -> OptimizerEvaluation:
-        return self._create_optimizer(self.config.optimizer.support, task.parameters())  # type: ignore
-
-    @provider
-    @inject
-    @singleton
-    def provide_optimizer_support(
-        self, model: Model, tasks_valid: TasksValid
-    ) -> OptimizerSupport:
-        parameters = self._merge_param(tasks_valid)
-        return self._create_optimizer(self.config.optimizer.support, parameters)
-
-    def _create_scheduler(
-        self, optimizer: torch.optim.Optimizer, config: _SchedulerConfig
-    ):
-        if config.type == SchedulerType.MULTI_STEP:
-            return torch.optim.lr_scheduler.MultiStepLR(
-                optimizer,
-                milestones=config.multistep.milestones,
-                gamma=config.multistep.gamma,
-            )
-        elif config.type == SchedulerType.CONSTANT:
-            return torch.optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lambda _: 1.0)  # type: ignore
-        else:
-            raise ValueError(f"Scheduler not yet supported {config.type}")
-
-    def _create_optimizer(self, config: _OptimizerConfig, parameters):
-        if config.type == OptimizerType.SGD:
-            return torch.optim.SGD(  # type: ignore
-                parameters,
-                lr=config.learning_rate,
-                weight_decay=config.weight_decay,
-                momentum=config.sgd.momentum,
-            )
-        elif config.type == OptimizerType.ADAM:
-            return torch.optim.Adam(  # type: ignore
-                parameters, lr=config.learning_rate, weight_decay=config.weight_decay,
-            )
-        else:
-            raise ValueError(f"Optimizer not yet supported {config.type}")
-
-    def _merge_param(self, modules: List[torch.nn.Module]):
-        for module in modules:
-            for parameter in module.parameters():
-                yield parameter
 
     def _get_train_class(self, task: TaskType):
         if task == TaskType.SUPERVISED:
