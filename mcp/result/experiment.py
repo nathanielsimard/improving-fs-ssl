@@ -19,7 +19,7 @@ class ExperimentResult(object):
         losses = []
         for epoch in range(1, self.config.trainer.epochs + 1):
             try:
-                file_name = os.path.join(self._records_dir, f"valid-{epoch}")
+                file_name = os.path.join(self._records_dir, f"eval-{epoch}")
                 records_valid = load_records_from_file(file_name)
                 loss = np.asarray(
                     [self._records_loss(rs) for rs in records_valid]
