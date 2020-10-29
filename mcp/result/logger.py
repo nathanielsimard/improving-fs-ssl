@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TextIO
+from typing import List, Optional, TextIO
 
 from mcp.task.base import TaskOutput
 from mcp.utils.logging import create_logger
@@ -17,12 +17,14 @@ class ResultRecord:
     metric_name: str
 
     def serialize(self) -> str:
-        content: Dict[str, str] = {}
-        content["name"] = self.name
-        content["loss"] = str(self.loss)
-        content["metric"] = str(self.metric)
-        content["metric_name"] = self.metric_name
-        return json.dumps(content)
+        return json.dumps(
+            {
+                "name": self.name,
+                "loss": str(self.loss),
+                "metric": str(self.metric),
+                "metric_name": self.metric_name,
+            }
+        )
 
 
 def load_records_from_file(file_path: str) -> List[List[ResultRecord]]:

@@ -5,6 +5,7 @@ import torch
 from mcp.config.parser import ExperimentConfig
 from mcp.context import create_injector
 from mcp.evaluation import Evaluation
+from mcp.result.experiment import ExperimentResult
 from mcp.training.trainer import Trainer
 
 
@@ -30,4 +31,5 @@ def run_eval(config: ExperimentConfig, result_dir: str, device_str: str):
     injector = create_injector(config, result_dir, device)
 
     evaluation = injector.get(Evaluation)
-    evaluation.eval()
+    result = injector.get(ExperimentResult)
+    evaluation.eval(result.best_epoch())

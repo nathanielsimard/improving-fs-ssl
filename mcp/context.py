@@ -30,6 +30,7 @@ from mcp.result.logger import ResultLogger
 from mcp.task.supervised import SupervisedTask
 from mcp.training.loop import TrainingLoop
 from mcp.training.trainer import Trainer, TrainerLoggers
+from mcp.result.experiment import ExperimentResult
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
@@ -127,7 +128,13 @@ class EvaluationModule(Module):
             scheduler,
             loggers,
             self.config.evaluation.num_iterations,
+            checkpoint_dir(self.output_dir),
         )
+
+    @provider
+    @singleton
+    def provide_experiment_result(self) -> ExperimentResult:
+        return ExperimentResult(self.config, self.output_dir)
 
 
 class TrainerModule(Module):
@@ -223,8 +230,6 @@ class TrainerModule(Module):
         tasks_train: TasksTrain,
         tasks_valid: TasksValid,
     ) -> Trainer:
-        checkpoint_dir = os.path.join(self.output_dir, "checkpoints")
-        os.makedirs(checkpoint_dir, exist_ok=True)
         return Trainer(
             model,
             optimizer_train,
@@ -239,7 +244,7 @@ class TrainerModule(Module):
             training_loop,
             trainer_loggers,
             self.device,
-            checkpoint_dir,
+            checkpoint_dir(self.output_dir),
         )
 
     @provider
@@ -416,3 +421,9 @@ class DataModule(Module):
             valid_dt.create(dataset_splits.valid),
             test_dt.create(dataset_splits.test),
         )
+
+
+def checkpoint_dir(output_dir):
+    checkpoint_dir = os.path.join(output_dir, "checkpoints")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    return checkpoint_dir

@@ -1,4 +1,5 @@
 from typing import NamedTuple
+import os
 
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -28,6 +29,7 @@ class Evaluation(object):
         scheduler: _LRScheduler,
         loggers: EvaluationLoggers,
         num_iterations: int,
+        save_path: str,
     ):
         self.few_shot_dataloader_factory = few_shot_dataloader_factory
         self.few_shot_dataset = few_shot_dataset
@@ -38,8 +40,10 @@ class Evaluation(object):
         self.scheduler = scheduler
         self.loggers = loggers
         self.num_iterations = num_iterations
+        self.save_path = save_path
 
-    def eval(self):
+    def eval(self, epoch: int):
+        self.model.load(self._model_path(epoch))
         for i in range(1, self.num_iterations + 1):
             dataloader = self.few_shot_dataloader_factory.create(self.few_shot_dataset)
             self.training_loop.fit_support(
@@ -56,3 +60,6 @@ class Evaluation(object):
                 dataloader.query,
                 self.loggers.evaluation.epoch(i, self.num_iterations),
             )
+
+    def _model_path(self, epoch: int) -> str:
+        return os.path.join(self.save_path, f"model-{epoch}.pth")
