@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, List, Optional, TextIO
+from typing import List
 
 import torch
 from torch.optim import Optimizer
@@ -7,64 +7,11 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from mcp.data.dataloader.dataloader import DataLoader
 from mcp.model.base import Model
+from mcp.result.logger import ResultLogger
 from mcp.task.base import Task, TaskOutput
 from mcp.utils.logging import create_logger
 
 logger = create_logger(__name__)
-
-
-class TrainingLogger(object):
-    def __init__(self, str_format: str, output: str):
-        self.str_format = str_format
-        self.output = output
-
-        self._file: Optional[TextIO] = None
-        self._epoch = 0
-        self._epochs = 0
-
-    def log(
-        self,
-        outputs: List[TaskOutput],
-        task_names: List[str],
-        batch_idx: int,
-        num_batches: int,
-    ):
-        info = [
-            f"{n}: loss={o.loss:.3f} {o.metric_name}={o.metric:.3f}"
-            for n, o in zip(task_names, outputs)
-        ]
-
-        logger.info(
-            f"{self.str_format} - Epoch {self._epoch}/{self._epochs} Batch {batch_idx}/{num_batches} {' | '.join(info)}"
-        )
-
-        if self._file is None:
-            raise Exception("Training logger not initialized with a specific epoch.")
-
-        content: Dict[str, str] = {}
-        for name, output in zip(task_names, outputs):
-            content["name"] = name
-            content["loss"] = str(output.loss.item())
-            content["metric"] = str(output.metric)
-            content["metric_name"] = output.metric_name
-        self._file.write(str(content) + "\n")
-
-    def epoch(self, epoch: int, epochs: int):
-        if self._file is not None:
-            self._file.close()
-            self._file = None
-
-        logger_copy = deepcopy(self)
-        logger_copy.output = self.output + f"-{epoch}"
-        logger_copy._file = open(logger_copy.output, "w")
-        logger_copy._epoch = epoch
-        logger_copy._epochs = epochs
-        return logger_copy
-
-    def __del__(self):
-        if self._file is not None:
-            self._file.close()
-            self._file = None
 
 
 class TrainingLoop(object):
@@ -82,7 +29,7 @@ class TrainingLoop(object):
         dataloader: DataLoader,
         optimizer: Optimizer,
         scheduler: _LRScheduler,
-        training_logger: TrainingLogger,
+        training_logger: ResultLogger,
         train_model=True,
     ) -> float:
         model.train(train_model)
@@ -112,7 +59,7 @@ class TrainingLoop(object):
         dataloader: DataLoader,
         optimizer: Optimizer,
         scheduler: _LRScheduler,
-        training_logger: TrainingLogger,
+        training_logger: ResultLogger,
     ):
         support_loss = 1.0
         support_epoch = 0
@@ -146,7 +93,7 @@ class TrainingLoop(object):
         model: Model,
         tasks: List[Task],
         dataloader: DataLoader,
-        training_logger: TrainingLogger,
+        training_logger: ResultLogger,
     ) -> float:
         task_names = [t.name for t in tasks]
 

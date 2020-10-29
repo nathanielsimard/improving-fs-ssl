@@ -8,17 +8,18 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from mcp.data.dataloader.dataloader import DataLoader, FewShotDataLoader
 from mcp.model.base import Model
+from mcp.result.logger import ResultLogger
 from mcp.task.base import Task
-from mcp.training.loop import TrainingLogger, TrainingLoop
+from mcp.training.loop import TrainingLoop
 from mcp.utils.logging import create_logger
 
 logger = create_logger(__name__)
 
 
 class TrainerLoggers(NamedTuple):
-    train: TrainingLogger
-    support: TrainingLogger
-    evaluation: TrainingLogger
+    train: ResultLogger
+    support: ResultLogger
+    evaluation: ResultLogger
 
 
 class Trainer(object):

@@ -26,9 +26,10 @@ from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.evaluation import Evaluation, EvaluationLoggers
 from mcp.model.base import Model
 from mcp.model.resnet import ResNet18
+from mcp.result.logger import ResultLogger
 from mcp.task.supervised import SupervisedTask
 from mcp.training.loop import TrainingLoop
-from mcp.training.trainer import Trainer, TrainerLoggers, TrainingLogger
+from mcp.training.trainer import Trainer, TrainerLoggers
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
@@ -89,10 +90,10 @@ class EvaluationModule(Module):
         os.makedirs(output_dir, exist_ok=True)
 
         return EvaluationLoggers(
-            support=TrainingLogger(
+            support=ResultLogger(
                 "Evaluation Support", os.path.join(output_dir, "support")
             ),
-            evaluation=TrainingLogger(
+            evaluation=ResultLogger(
                 "Evaluation Support", os.path.join(output_dir, "eval")
             ),
         )
@@ -125,6 +126,7 @@ class EvaluationModule(Module):
             optimizer,
             scheduler,
             loggers,
+            self.config.evaluation.num_iterations,
         )
 
 
@@ -196,11 +198,11 @@ class TrainerModule(Module):
         os.makedirs(output_dir, exist_ok=True)
 
         return TrainerLoggers(
-            train=TrainingLogger("Training", os.path.join(output_dir, "train")),
-            support=TrainingLogger(
+            train=ResultLogger("Training", os.path.join(output_dir, "train")),
+            support=ResultLogger(
                 "Training - Support", os.path.join(output_dir, "support")
             ),
-            evaluation=TrainingLogger(
+            evaluation=ResultLogger(
                 "Training - Evaluation", os.path.join(output_dir, "eval")
             ),
         )
