@@ -3,7 +3,7 @@ from typing import Optional
 import torch
 
 from mcp.config.parser import ExperimentConfig
-from mcp.context import create_injector
+from mcp.context.base import create_injector
 from mcp.evaluation import Evaluation
 from mcp.result.experiment import ExperimentResult
 from mcp.training.trainer import Trainer
