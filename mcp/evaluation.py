@@ -47,6 +47,7 @@ class Evaluation(object):
 
     def eval(self, epoch: int):
         self.model.to(self.device)
+        self.task.to(self.device)
         self.model.load(self._model_path(epoch), self.device)
 
         for i in range(1, self.num_iterations + 1):
