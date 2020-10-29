@@ -25,13 +25,13 @@ from mcp.data.dataset.dataset import (
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.evaluation import Evaluation, EvaluationLoggers
 from mcp.model.base import Model
-from mcp.task.base import Task
 from mcp.model.resnet import ResNet18
+from mcp.result.experiment import ExperimentResult
 from mcp.result.logger import ResultLogger
+from mcp.task.base import Task
 from mcp.task.supervised import SupervisedTask
 from mcp.training.loop import TrainingLoop
 from mcp.training.trainer import Trainer, TrainerLoggers
-from mcp.result.experiment import ExperimentResult
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)

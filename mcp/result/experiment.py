@@ -1,9 +1,10 @@
 import os
-import numpy as np
 from typing import List
 
-from mcp.result.logger import ResultRecord, load_records_from_file
+import numpy as np
+
 from mcp.config.parser import ExperimentConfig
+from mcp.result.logger import ResultRecord, load_records_from_file
 from mcp.utils.logging import create_logger
 
 logger = create_logger(__name__)

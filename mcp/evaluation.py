@@ -1,7 +1,7 @@
-from typing import NamedTuple
-import torch
 import os
+from typing import NamedTuple
 
+import torch
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
