@@ -116,6 +116,7 @@ class Trainer(object):
 
             os.remove(self._trainer_path(epoch))
             os.remove(self._model_path(epoch))
+            os.remove(self._task_path(epoch))
 
             del self.valid_losses[idx]
             del self.checkpoints[idx]

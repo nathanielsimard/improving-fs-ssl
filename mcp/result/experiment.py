@@ -31,7 +31,7 @@ class ExperimentResult(object):
                 )
                 break
 
-        indexes = np.argsort(np.asarray(losses)) + 1
+        indexes = np.argsort(np.asarray(losses))
         index = indexes[0]
         epoch = index + 1
         valid_loss = losses[index]
