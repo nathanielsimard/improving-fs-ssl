@@ -43,7 +43,7 @@ class TrainingLoop(object):
         total = 0.0
         for i, (x, y) in enumerate(dataloader):
             print("x", x.shape)
-            print("y", x.shape)
+            print("y", y.shape)
             outputs = self._step(model, tasks, x, y, optimizer)
 
             training_logger.log(outputs, task_names, i + 1, len(dataloader))
