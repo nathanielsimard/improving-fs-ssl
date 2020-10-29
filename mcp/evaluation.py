@@ -46,7 +46,9 @@ class Evaluation(object):
         self.device = device
 
     def eval(self, epoch: int):
+        self.model.to(self.device)
         self.model.load(self._model_path(epoch), self.device)
+
         for i in range(1, self.num_iterations + 1):
             dataloader = self.few_shot_dataloader_factory.create(self.few_shot_dataset)
             self.training_loop.fit_support(
