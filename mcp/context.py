@@ -25,6 +25,7 @@ from mcp.data.dataset.dataset import (
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.evaluation import Evaluation, EvaluationLoggers
 from mcp.model.base import Model
+from mcp.task.base import Task
 from mcp.model.resnet import ResNet18
 from mcp.result.logger import ResultLogger
 from mcp.task.supervised import SupervisedTask
@@ -34,11 +35,17 @@ from mcp.result.experiment import ExperimentResult
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
+TaskTest = NewType("TaskTest", Task)
 
 OptimizerTrain = NewType("OptimizerTrain", torch.optim.Optimizer)
 OptimizerSupport = NewType("OptimizerSupport", torch.optim.Optimizer)
 SchedulerTrain = NewType("SchedulerTrain", torch.optim.lr_scheduler._LRScheduler)
 SchedulerSupport = NewType("SchedulerSupport", torch.optim.lr_scheduler._LRScheduler)
+
+OptimizerEvaluation = NewType("OptimizerEvaluation", torch.optim.Optimizer)
+SchedulerEvaluation = NewType(
+    "SchedulerEvaluation", torch.optim.lr_scheduler._LRScheduler
+)
 
 ValidFewShotDataLoaderFactory = NewType(
     "ValidFewShotDataLoaderFactory", FewShotDataLoaderFactory
@@ -106,18 +113,13 @@ class EvaluationModule(Module):
         self,
         dataloader_factory: TestFewShotDataLoaderFactory,
         dataset_splits: FewShotDatasetSplits,
-        metadata: DatasetMetadata,
-        transforms: KorniaTransforms,
+        task: TaskTest,
         model: Model,
         training_loop: TrainingLoop,
-        optimizer: OptimizerSupport,
-        scheduler: SchedulerSupport,
+        optimizer: OptimizerEvaluation,
+        scheduler: SchedulerEvaluation,
         loggers: EvaluationLoggers,
     ) -> Evaluation:
-        task = SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.test_num_class, transforms
-        )
-
         return Evaluation(
             dataloader_factory,
             dataset_splits.test,
@@ -159,6 +161,16 @@ class TrainerModule(Module):
         return [  # type: ignore
             injector.get(SupervisedTaskValid)
         ]
+
+    @multiprovider
+    @inject
+    @singleton
+    def provide_test_task(
+        self, metadata: DatasetMetadata, transforms: KorniaTransforms,
+    ) -> TaskTest:
+        return SupervisedTask(  # type: ignore
+            self.config.model.embedding_size, metadata.test_num_class, transforms
+        )
 
     @provider
     @singleton
@@ -267,12 +279,29 @@ class TrainerModule(Module):
     @provider
     @inject
     @singleton
+    def provide_optimizer_scheduler_eval(
+        self, optimizer: OptimizerEvaluation
+    ) -> SchedulerEvaluation:
+        return self._create_scheduler(optimizer, self.config.scheduler.support)
+
+    @provider
+    @inject
+    @singleton
     def provide_optimizer_train(
         self, model: Model, tasks_train: TasksTrain, tasks_valid: TasksValid
     ) -> OptimizerTrain:
         modules = [model] + tasks_train
         parameters = self._merge_param(modules)
         return self._create_optimizer(self.config.optimizer.train, parameters)
+
+    @provider
+    @inject
+    @singleton
+    def provide_optimizer_eval(
+        self, model: Model, tasks_valid: TasksValid
+    ) -> OptimizerEvaluation:
+        parameters = self._merge_param(tasks_valid)
+        return self._create_optimizer(self.config.optimizer.support, parameters)
 
     @provider
     @inject
