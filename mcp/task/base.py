@@ -4,6 +4,8 @@ from typing import NamedTuple, Optional
 import torch
 from torch import nn
 
+from mcp.model.base import Model
+
 
 class TaskOutput(NamedTuple):
     loss: torch.Tensor
@@ -11,7 +13,7 @@ class TaskOutput(NamedTuple):
     metric_name: str
 
 
-class Task(abc.ABC, nn.Module):
+class Task(Model):
     @abc.abstractproperty
     def name(self) -> str:
         pass

@@ -6,6 +6,8 @@ from mcp.config.dataloader import DataLoaderConfig
 from mcp.config.dataloader import parse as parse_dataloader
 from mcp.config.dataset import DatasetConfig
 from mcp.config.dataset import parse as parse_dataset
+from mcp.config.evaluation import EvaluationConfig
+from mcp.config.evaluation import parse as parse_evaluation
 from mcp.config.loader import ConfigType, merge
 from mcp.config.model import ModelConfig
 from mcp.config.model import parse as parse_model
@@ -53,6 +55,7 @@ DEFAULT_CONFIG: ConfigType = {
         "support_training": {"max_epochs": 150, "min_loss": 0.001},
     },
     "model": {"embedding_size": 256},
+    "evaluation": {"num_iterations": 25},
 }
 
 
@@ -63,6 +66,7 @@ class ExperimentConfig(NamedTuple):
     scheduler: SchedulerConfig
     trainer: TrainerConfig
     model: ModelConfig
+    evaluation: EvaluationConfig
 
 
 def parse(
@@ -86,4 +90,5 @@ def parse(
         scheduler=parse_scheduler(config),
         trainer=parse_trainer(config),
         model=parse_model(config),
+        evaluation=parse_evaluation(config),
     )

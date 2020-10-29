@@ -26,17 +26,26 @@ from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.evaluation import Evaluation, EvaluationLoggers
 from mcp.model.base import Model
 from mcp.model.resnet import ResNet18
+from mcp.result.experiment import ExperimentResult
+from mcp.result.logger import ResultLogger
+from mcp.task.base import Task
 from mcp.task.supervised import SupervisedTask
 from mcp.training.loop import TrainingLoop
-from mcp.training.trainer import Trainer, TrainerLoggers, TrainingLogger
+from mcp.training.trainer import Trainer, TrainerLoggers
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
+TaskTest = NewType("TaskTest", Task)
 
 OptimizerTrain = NewType("OptimizerTrain", torch.optim.Optimizer)
 OptimizerSupport = NewType("OptimizerSupport", torch.optim.Optimizer)
 SchedulerTrain = NewType("SchedulerTrain", torch.optim.lr_scheduler._LRScheduler)
 SchedulerSupport = NewType("SchedulerSupport", torch.optim.lr_scheduler._LRScheduler)
+
+OptimizerEvaluation = NewType("OptimizerEvaluation", torch.optim.Optimizer)
+SchedulerEvaluation = NewType(
+    "SchedulerEvaluation", torch.optim.lr_scheduler._LRScheduler
+)
 
 ValidFewShotDataLoaderFactory = NewType(
     "ValidFewShotDataLoaderFactory", FewShotDataLoaderFactory
@@ -89,10 +98,10 @@ class EvaluationModule(Module):
         os.makedirs(output_dir, exist_ok=True)
 
         return EvaluationLoggers(
-            support=TrainingLogger(
+            support=ResultLogger(
                 "Evaluation Support", os.path.join(output_dir, "support")
             ),
-            evaluation=TrainingLogger(
+            evaluation=ResultLogger(
                 "Evaluation Support", os.path.join(output_dir, "eval")
             ),
         )
@@ -104,18 +113,13 @@ class EvaluationModule(Module):
         self,
         dataloader_factory: TestFewShotDataLoaderFactory,
         dataset_splits: FewShotDatasetSplits,
-        metadata: DatasetMetadata,
-        transforms: KorniaTransforms,
+        task: TaskTest,
         model: Model,
         training_loop: TrainingLoop,
-        optimizer: OptimizerSupport,
-        scheduler: SchedulerSupport,
+        optimizer: OptimizerEvaluation,
+        scheduler: SchedulerEvaluation,
         loggers: EvaluationLoggers,
     ) -> Evaluation:
-        task = SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.test_num_class, transforms
-        )
-
         return Evaluation(
             dataloader_factory,
             dataset_splits.test,
@@ -125,7 +129,15 @@ class EvaluationModule(Module):
             optimizer,
             scheduler,
             loggers,
+            self.config.evaluation.num_iterations,
+            checkpoint_dir(self.output_dir),
+            self.device,
         )
+
+    @provider
+    @singleton
+    def provide_experiment_result(self) -> ExperimentResult:
+        return ExperimentResult(self.config, self.output_dir)
 
 
 class TrainerModule(Module):
@@ -147,8 +159,18 @@ class TrainerModule(Module):
     @singleton
     def provide_valid_tasks(self, injector: Injector) -> TasksValid:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks  # type: ignore
+            injector.get(SupervisedTaskValid)
         ]
+
+    @multiprovider
+    @inject
+    @singleton
+    def provide_test_task(
+        self, metadata: DatasetMetadata, transforms: KorniaTransforms,
+    ) -> TaskTest:
+        return SupervisedTask(  # type: ignore
+            self.config.model.embedding_size, metadata.test_num_class, transforms
+        )
 
     @provider
     @singleton
@@ -196,11 +218,11 @@ class TrainerModule(Module):
         os.makedirs(output_dir, exist_ok=True)
 
         return TrainerLoggers(
-            train=TrainingLogger("Training", os.path.join(output_dir, "train")),
-            support=TrainingLogger(
+            train=ResultLogger("Training", os.path.join(output_dir, "train")),
+            support=ResultLogger(
                 "Training - Support", os.path.join(output_dir, "support")
             ),
-            evaluation=TrainingLogger(
+            evaluation=ResultLogger(
                 "Training - Evaluation", os.path.join(output_dir, "eval")
             ),
         )
@@ -235,6 +257,7 @@ class TrainerModule(Module):
             training_loop,
             trainer_loggers,
             self.device,
+            checkpoint_dir(self.output_dir),
         )
 
     @provider
@@ -256,12 +279,28 @@ class TrainerModule(Module):
     @provider
     @inject
     @singleton
+    def provide_optimizer_scheduler_eval(
+        self, optimizer: OptimizerEvaluation
+    ) -> SchedulerEvaluation:
+        return self._create_scheduler(optimizer, self.config.scheduler.support)
+
+    @provider
+    @inject
+    @singleton
     def provide_optimizer_train(
         self, model: Model, tasks_train: TasksTrain, tasks_valid: TasksValid
     ) -> OptimizerTrain:
         modules = [model] + tasks_train
         parameters = self._merge_param(modules)
         return self._create_optimizer(self.config.optimizer.train, parameters)
+
+    @provider
+    @inject
+    @singleton
+    def provide_optimizer_eval(
+        self, model: Model, task: TaskTest
+    ) -> OptimizerEvaluation:
+        return self._create_optimizer(self.config.optimizer.support, task.parameters())  # type: ignore
 
     @provider
     @inject
@@ -311,12 +350,6 @@ class TrainerModule(Module):
             return SupervisedTaskTrain
         else:
             raise ValueError(f"Training Task type not yet supported {task}")
-
-    def _get_valid_class(self, task: TaskType):
-        if task == TaskType.SUPERVISED:
-            return SupervisedTaskValid
-        else:
-            raise ValueError(f"Valid Task type not yet supported {task}")
 
 
 class DataModule(Module):
@@ -417,3 +450,9 @@ class DataModule(Module):
             valid_dt.create(dataset_splits.valid),
             test_dt.create(dataset_splits.test),
         )
+
+
+def checkpoint_dir(output_dir):
+    checkpoint_dir = os.path.join(output_dir, "checkpoints")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    return checkpoint_dir
