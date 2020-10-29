@@ -298,10 +298,9 @@ class TrainerModule(Module):
     @inject
     @singleton
     def provide_optimizer_eval(
-        self, model: Model, tasks_valid: TasksValid
+        self, model: Model, task: TaskTest
     ) -> OptimizerEvaluation:
-        parameters = self._merge_param(tasks_valid)
-        return self._create_optimizer(self.config.optimizer.support, parameters)
+        return self._create_optimizer(self.config.optimizer.support, task.parameters())  # type: ignore
 
     @provider
     @inject
