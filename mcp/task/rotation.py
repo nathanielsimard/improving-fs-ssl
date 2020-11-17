@@ -28,7 +28,7 @@ class BatchRotation(object):
             batch_ids[tfm_id].append(_id)
 
         out = torch.empty_like(x)
-        labels = torch.empty(x.size(0), dtype=torch.long)
+        labels = torch.empty(x.size(0), dtype=torch.long, device=x.device)
 
         for tfm_id, ids in batch_ids.items():
             out[ids] = self.rotations[tfm_id](x[ids])
