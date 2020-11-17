@@ -2,7 +2,7 @@ from typing import Callable, Tuple, Union
 
 import torch
 import torchvision.transforms as transforms
-from kornia.augmentation import ColorJitter, Normalize, RandomCrop, RandomHorizontalFlip
+from kornia.augmentation import ColorJitter, Normalize, RandomCrop, RandomHorizontalFlip, RandomAffine
 from PIL import Image
 
 # Transforms can be a composition, a callable function or object
@@ -43,3 +43,6 @@ class KorniaTransforms(object):
 
     def color_jitter(self) -> ColorJitter:
         return ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4)
+
+    def rotate(self, degree: float, p: float = 1.0):
+        return RandomAffine(p=p, degrees=(degree, degree))
