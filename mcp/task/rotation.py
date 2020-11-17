@@ -8,6 +8,7 @@ from torch import nn
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.metric import Accuracy
 from mcp.task.base import Task, TaskOutput
+from mcp.task.compute import TaskCompute
 
 
 class BatchRotation(object):
@@ -39,22 +40,13 @@ class BatchRotation(object):
 
 class RotationTask(Task):
     def __init__(
-        self,
-        embedding_size: int,
-        transforms: KorniaTransforms,
-        batch_rotation: BatchRotation,
+        self, embedding_size: int, compute: TaskCompute, batch_rotation: BatchRotation,
     ):
         super().__init__()
         self.metric = Accuracy()
         self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
         self.loss = nn.CrossEntropyLoss()
-        self.transforms_train = [
-            transforms.random_crop(),
-            transforms.color_jitter(),
-            transforms.random_flip(),
-            transforms.normalize(),
-        ]
-        self.transforms_eval = [transforms.normalize()]
+        self.compute = compute
         self.batch_rotation = batch_rotation
         self._training = True
 
@@ -65,7 +57,7 @@ class RotationTask(Task):
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
-        x = self._transform(x)
+        x = self.compute.cache_transform(x, self._training)
         x, y = self.batch_rotation.rotate(x)
         x = encoder(x)
         x = self.output(x)
@@ -83,12 +75,6 @@ class RotationTask(Task):
         tvu.save_image(x[0], "/tmp/test-rot.png")
         print(f"Rotate the thing {y[0]}")
         raise Exception("Exit")
-
-    def _transform(self, x: torch.Tensor):
-        transforms = self.transforms_train if self._training else self.transforms_eval
-        for t in transforms:
-            x = t(x)
-        return x
 
     def train(self, mode: bool = True):
         self._training = mode
