@@ -1,46 +1,52 @@
-from typing import Optional, NamedTuple, List
-
-import torch
 import random
 from collections import defaultdict
+from typing import Dict, List, Optional, Tuple
+
+import torch
 from torch import nn
 
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.metric import Accuracy
 from mcp.task.base import Task, TaskOutput
 
-class RotationOutput(NamedTuple):
-    batch: torch.Tensor
-    labels: torch.Tensor
 
 class BatchRotation(object):
-    def __init__(self, transforms: KorniaTransforms, degrees: List[int] = [0, 90, 180, 270]):
+    def __init__(
+        self, transforms: KorniaTransforms, degrees: List[int] = [0, 90, 180, 270]
+    ):
         self.rotations = [transforms.rotate(d) for d in degrees]
+        self.num_classes = len(degrees)
 
-    def rotate(self, x: torch.Tensor) -> RotationOutput:
+    def rotate(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         tfm_ids = list(range(len(self.rotations)))
         sample_ids = list(range(x.size(0)))
         random.shuffle(sample_ids)
-        batch_ids = defaultdict(lambda: [])
+        batch_ids: Dict[int, List[int]] = defaultdict(lambda: [])
+
         for _id in sample_ids:
-            tfm_id = random.sample(tfm_ids, 1)
+            tfm_id = random.sample(tfm_ids, 1)[0]
             batch_ids[tfm_id].append(_id)
 
         out = torch.empty_like(x)
         labels = torch.empty(x.size(0), dtype=torch.long)
+
         for tfm_id, ids in batch_ids.items():
             out[ids] = self.rotations[tfm_id](x[ids])
-            labels[ids] = tfm_id
+            labels[ids] = torch.tensor(tfm_id, dtype=labels.dtype, device=labels.device)
+
         return out, labels
 
 
 class RotationTask(Task):
     def __init__(
-        self, embedding_size: int, transforms: KorniaTransforms, batch_rotation: BatchRotation
+        self,
+        embedding_size: int,
+        transforms: KorniaTransforms,
+        batch_rotation: BatchRotation,
     ):
         super().__init__()
         self.metric = Accuracy()
-        self.output = nn.Linear(embedding_size, num_classes)
+        self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.transforms_train = [
             transforms.random_crop(),
@@ -59,9 +65,9 @@ class RotationTask(Task):
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
-
+        self._plot_and_exit(x)
         x = self._transform(x)
-        x, y = self.batch_rotation(x)
+        x, y = self.batch_rotation.rotate(x)
         x = encoder(x)
         x = self.output(x)
 
@@ -69,6 +75,15 @@ class RotationTask(Task):
         loss = self.loss(x, y)
 
         return TaskOutput(loss=loss, metric=metric, metric_name="acc")
+
+    def _plot_and_exit(self, x):
+        import torchvision.utils as tvu
+
+        tvu.save_image(x[0], "/tmp/test-ori.png")
+        x, y = self.batch_rotation.rotate(x)
+        tvu.save_image(x[0], "/tmp/test-rot.png")
+        print(f"Rotate the thing {y[0]}")
+        raise Exception("Exit")
 
     def _transform(self, x: torch.Tensor):
         transforms = self.transforms_train if self._training else self.transforms_eval

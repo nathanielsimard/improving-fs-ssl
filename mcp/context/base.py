@@ -2,11 +2,10 @@ import os
 from typing import NewType
 
 import torch
-from injector import Injector, Module, inject, multiprovider, provider, singleton
+from injector import Injector, Module, inject, provider, singleton
 
 from mcp.config.dataset import Source
 from mcp.config.parser import ExperimentConfig
-from mcp.config.trainer import TaskType
 from mcp.context.optimizer import (
     OptimizerModule,
     OptimizerTest,
@@ -17,7 +16,7 @@ from mcp.context.optimizer import (
     SchedulerTrain,
     SchedulerValid,
 )
-from mcp.context.task import TasksTrain, TasksValid, TaskTest
+from mcp.context.task import TaskModule, TasksTrain, TasksValid, TaskTest
 from mcp.data.dataloader.dataloader import (
     DataLoaderFactory,
     FewShotDataLoaderFactory,
@@ -56,6 +55,7 @@ def create_injector(
         [
             TrainerModule(config, output_dir, device),
             DataModule(config, output_dir, device),
+            TaskModule(config, output_dir, device),
             ModelModule(config, output_dir, device),
             EvaluationModule(config, output_dir, device),
             OptimizerModule(config, output_dir, device),
@@ -142,32 +142,6 @@ class TrainerModule(Module):
         self.output_dir = output_dir
         self.device = device
 
-    @multiprovider
-    @inject
-    @singleton
-    def provide_train_tasks(self, injector: Injector) -> TasksTrain:
-        return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks  # type: ignore
-        ]
-
-    @multiprovider
-    @inject
-    @singleton
-    def provide_valid_tasks(self, injector: Injector) -> TasksValid:
-        return [  # type: ignore
-            injector.get(SupervisedTaskValid)
-        ]
-
-    @multiprovider
-    @inject
-    @singleton
-    def provide_test_task(
-        self, metadata: DatasetMetadata, transforms: KorniaTransforms,
-    ) -> TaskTest:
-        return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.test_num_class, transforms
-        )
-
     @provider
     @singleton
     def provide_kornia_transformations(self) -> KorniaTransforms:
@@ -177,26 +151,6 @@ class TrainerModule(Module):
             raise ValueError(
                 f"Dataset source not yet supported {self.config.dataset.source}"
             )
-
-    @provider
-    @inject
-    @singleton
-    def provide_train_supervised_task(
-        self, metadata: DatasetMetadata, transforms: KorniaTransforms
-    ) -> SupervisedTaskTrain:
-        return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.train_num_class, transforms
-        )
-
-    @provider
-    @inject
-    @singleton
-    def provide_valid_supervised_task(
-        self, metadata: DatasetMetadata, transforms: KorniaTransforms
-    ) -> SupervisedTaskValid:
-        return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.valid_num_class, transforms
-        )
 
     @provider
     @singleton
@@ -255,12 +209,6 @@ class TrainerModule(Module):
             self.device,
             checkpoint_dir(self.output_dir),
         )
-
-    def _get_train_class(self, task: TaskType):
-        if task == TaskType.SUPERVISED:
-            return SupervisedTaskTrain
-        else:
-            raise ValueError(f"Training Task type not yet supported {task}")
 
 
 class DataModule(Module):
