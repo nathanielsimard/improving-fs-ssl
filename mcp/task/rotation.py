@@ -65,7 +65,6 @@ class RotationTask(Task):
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
-        self._plot_and_exit(x)
         x = self._transform(x)
         x, y = self.batch_rotation.rotate(x)
         x = encoder(x)
