@@ -9,6 +9,7 @@ from mcp.config.trainer import TaskType
 from mcp.data.dataset.dataset import DatasetMetadata
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.task.base import Task
+from mcp.task.compute import TaskCompute
 from mcp.task.rotation import BatchRotation, RotationTask
 from mcp.task.supervised import SupervisedTask
 
@@ -34,6 +35,12 @@ class TaskModule(Module):
     @provider
     @inject
     @singleton
+    def provide_compute(self, transforms: KorniaTransforms) -> TaskCompute:
+        return TaskCompute(transforms)
+
+    @provider
+    @inject
+    @singleton
     def provide_batch_rotation(self, transforms: KorniaTransforms) -> BatchRotation:
         return BatchRotation(transforms)
 
@@ -41,40 +48,38 @@ class TaskModule(Module):
     @inject
     @singleton
     def provide_rotation_task(
-        self, transforms: KorniaTransforms, batch_rotation: BatchRotation
+        self, compute: TaskCompute, batch_rotation: BatchRotation
     ) -> RotationTask:
-        return RotationTask(
-            self.config.model.embedding_size, transforms, batch_rotation
-        )
+        return RotationTask(self.config.model.embedding_size, compute, batch_rotation)
 
     @provider
     @inject
     @singleton
     def provide_train_supervised_task(
-        self, metadata: DatasetMetadata, transforms: KorniaTransforms
+        self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskTrain:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.train_num_class, transforms
+            self.config.model.embedding_size, metadata.train_num_class, compute
         )
 
     @provider
     @inject
     @singleton
     def provide_valid_supervised_task(
-        self, metadata: DatasetMetadata, transforms: KorniaTransforms
+        self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskValid:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.valid_num_class, transforms
+            self.config.model.embedding_size, metadata.valid_num_class, compute
         )
 
     @provider
     @inject
     @singleton
     def provide_test_task(
-        self, metadata: DatasetMetadata, transforms: KorniaTransforms,
+        self, metadata: DatasetMetadata, compute: TaskCompute,
     ) -> TaskTest:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.test_num_class, transforms
+            self.config.model.embedding_size, metadata.test_num_class, compute
         )
 
     @multiprovider
@@ -95,10 +100,10 @@ class TaskModule(Module):
 
     def _get_train_class(self, task: TaskType):
         classes = deepcopy(self._default_task_classes)
-        classes[TaskType.SUPERVISED] = SupervisedTaskTrain
+        classes[TaskType.SUPERVISED] = SupervisedTaskTrain  # type: ignore
         return classes[task]
 
     def _get_valid_class(self, task: TaskType):
         classes = deepcopy(self._default_task_classes)
-        classes[TaskType.SUPERVISED] = SupervisedTaskValid
+        classes[TaskType.SUPERVISED] = SupervisedTaskValid  # type: ignore
         return classes[task]

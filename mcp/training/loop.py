@@ -9,6 +9,7 @@ from mcp.data.dataloader.dataloader import DataLoader
 from mcp.model.base import Model
 from mcp.result.logger import ResultLogger
 from mcp.task.base import Task, TaskOutput
+from mcp.task.compute import TaskCompute
 from mcp.utils.logging import create_logger
 
 logger = create_logger(__name__)
@@ -16,11 +17,16 @@ logger = create_logger(__name__)
 
 class TrainingLoop(object):
     def __init__(
-        self, device: torch.device, support_min_loss: float, support_max_epochs: int,
+        self,
+        device: torch.device,
+        support_min_loss: float,
+        support_max_epochs: int,
+        compute: TaskCompute,
     ):
         self.device = device
         self.support_min_loss = support_min_loss
         self.support_max_epochs = support_max_epochs
+        self.computer = compute
 
     def fit_one(
         self,
@@ -136,4 +142,6 @@ class TrainingLoop(object):
         x = x.to(self.device)
         y = y.to(self.device)
 
-        return [task.run(model, x, y) for task in tasks]
+        computed = [task.run(model, x, y) for task in tasks]
+        self.computer.cache_clear()
+        return computed

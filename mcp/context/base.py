@@ -36,6 +36,7 @@ from mcp.model.base import Model
 from mcp.model.resnet import ResNet18
 from mcp.result.experiment import ExperimentResult
 from mcp.result.logger import ResultLogger
+from mcp.task.compute import TaskCompute
 from mcp.task.supervised import SupervisedTask
 from mcp.training.loop import TrainingLoop
 from mcp.training.trainer import Trainer, TrainerLoggers
@@ -153,12 +154,14 @@ class TrainerModule(Module):
             )
 
     @provider
+    @inject
     @singleton
-    def provide_training_loop(self) -> TrainingLoop:
+    def provide_training_loop(self, compute: TaskCompute) -> TrainingLoop:
         return TrainingLoop(
             self.device,
             self.config.trainer.support_training.min_loss,
             self.config.trainer.support_training.max_epochs,
+            compute,
         )
 
     @provider
