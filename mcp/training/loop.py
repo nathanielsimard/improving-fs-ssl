@@ -26,7 +26,7 @@ class TrainingLoop(object):
         self.device = device
         self.support_min_loss = support_min_loss
         self.support_max_epochs = support_max_epochs
-        self.computer = compute
+        self.compute = compute
 
     def fit_one(
         self,
@@ -143,5 +143,5 @@ class TrainingLoop(object):
         y = y.to(self.device)
 
         computed = [task.run(model, x, y) for task in tasks]
-        self.computer.cache_clear()
+        self.compute.cache_clear()
         return computed
