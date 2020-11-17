@@ -7,9 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: goanpeca/setup-miniconda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          miniconda-version: "latest"
+          auto-update-conda: true
           activate-environment: MCP-FS
           python-version: 3.7
       - uses: actions/cache@v2

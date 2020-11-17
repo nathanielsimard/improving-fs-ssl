@@ -6,6 +6,7 @@ from mcp.config.loader import ConfigType
 
 class TaskType(Enum):
     SUPERVISED = "supervised"
+    ROTATION = "rotation"
 
 
 class SupportTrainingConfig(NamedTuple):
