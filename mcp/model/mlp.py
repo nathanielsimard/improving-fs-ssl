@@ -4,10 +4,16 @@ from torch import nn
 
 class MLP(nn.Module):
     def __init__(
-        self, size_input: int, size_hidden: int, n_hiddens: int, dropout: float
+        self,
+        size_input: int,
+        size_hidden: int,
+        size_output: int,
+        n_hiddens: int,
+        dropout: float,
     ):
         super().__init__()
         self.input = nn.Linear(size_input, size_hidden)
+        self.output = nn.Linear(size_hidden, size_output)
         self.dropout = nn.Dropout(dropout)
         self.activation = nn.ReLU()
         self.hiddens = nn.ModuleList(
@@ -23,5 +29,8 @@ class MLP(nn.Module):
             x = hidden(x)
             x = self.activation(x)
             x = self.dropout(x)
+
+        x = self.output(x)
+        x = self.activation(x)
 
         return x
