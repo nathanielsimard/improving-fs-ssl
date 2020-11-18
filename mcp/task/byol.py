@@ -33,9 +33,6 @@ class BYOLTask(Task):
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
-        if y is None:
-            raise ValueError("Labels are required for supervised task")
-
         x_original = x
 
         x = self.compute.cache_transform(x_original, self._training)
