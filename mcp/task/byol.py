@@ -39,16 +39,16 @@ class BYOLTask(Task):
 
         x = self.compute.cache_transform(x_original, self._training)
         x = self.compute.cache_forward(x, encoder)
-        # x = self.projection_head(x)
-        # x = self.norm(x)
-        # x = self.predictor(x)
+        x = self.projection_head(x)
+        x = self.norm(x)
+        x = self.predictor(x)
 
         x_prime = self.compute.transform(x_original, self._training)
         x_prime = encoder(x_prime)
-        # x_prime = self.projection_head(x_prime)
-        # x_prime = self.norm(x_prime)
+        x_prime = self.projection_head(x_prime)
+        x_prime = self.norm(x_prime)
 
-        loss = 100 * self._loss(x, x_prime)
+        loss = self._loss(x, x_prime)
         metric = loss.cpu().detach().item()
 
         return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm")
