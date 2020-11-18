@@ -5,10 +5,11 @@ import torch
 from injector import Injector, Module, inject, multiprovider, provider, singleton
 
 from mcp.config.parser import ExperimentConfig
-from mcp.config.trainer import TaskType
+from mcp.config.task import TaskType
 from mcp.data.dataset.dataset import DatasetMetadata
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.task.base import Task
+from mcp.task.byol import BYOLTask
 from mcp.task.compute import TaskCompute
 from mcp.task.rotation import BatchRotation, RotationTask
 from mcp.task.supervised import SupervisedTask
@@ -30,6 +31,7 @@ class TaskModule(Module):
         self._default_task_classes = {
             TaskType.ROTATION: RotationTask,
             TaskType.SUPERVISED: SupervisedTask,
+            TaskType.BYOL: BYOLTask,
         }
 
     @provider
@@ -51,6 +53,18 @@ class TaskModule(Module):
         self, compute: TaskCompute, batch_rotation: BatchRotation
     ) -> RotationTask:
         return RotationTask(self.config.model.embedding_size, compute, batch_rotation)
+
+    @provider
+    @inject
+    @singleton
+    def provide_byol_task(self, compute: TaskCompute) -> BYOLTask:
+        return BYOLTask(
+            self.config.model.embedding_size,
+            compute,
+            self.config.task.byol.head_size,
+            self.config.task.byol.head_n_hiddens,
+            self.config.task.byol.dropout,
+        )
 
     @provider
     @inject
@@ -87,7 +101,7 @@ class TaskModule(Module):
     @singleton
     def provide_train_tasks(self, injector: Injector) -> TasksTrain:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks  # type: ignore
+            injector.get(self._get_train_class(t)) for t in self.config.task.types  # type: ignore
         ]
 
     @multiprovider
@@ -95,7 +109,7 @@ class TaskModule(Module):
     @singleton
     def provide_valid_tasks(self, injector: Injector) -> TasksValid:
         return [  # type: ignore
-            injector.get(self._get_valid_class(t)) for t in self.config.trainer.tasks  # type: ignore
+            injector.get(self._get_valid_class(t)) for t in self.config.task.types  # type: ignore
         ]
 
     def _get_train_class(self, task: TaskType):

@@ -15,6 +15,8 @@ from mcp.config.optimizer import OptimizerConfig
 from mcp.config.optimizer import parse as parse_optimizer
 from mcp.config.scheduler import SchedulerConfig
 from mcp.config.scheduler import parse as parse_scheduler
+from mcp.config.task import TaskConfig
+from mcp.config.task import parse as parse_task
 from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
@@ -51,8 +53,11 @@ DEFAULT_CONFIG: ConfigType = {
     },
     "trainer": {
         "epochs": 90,
-        "tasks": ["supervised", "rotation"],
         "support_training": {"max_epochs": 150, "min_loss": 0.001},
+    },
+    "task": {
+        "types": ["supervised", "rotation", "byol"],
+        "byol": {"head_size": 128, "head_n_hiddens": 2, "dropout": 0.25},
     },
     "model": {"embedding_size": 256},
     "evaluation": {"num_iterations": 25},
@@ -67,6 +72,7 @@ class ExperimentConfig(NamedTuple):
     trainer: TrainerConfig
     model: ModelConfig
     evaluation: EvaluationConfig
+    task: TaskConfig
 
 
 def parse(
@@ -91,4 +97,5 @@ def parse(
         trainer=parse_trainer(config),
         model=parse_model(config),
         evaluation=parse_evaluation(config),
+        task=parse_task(config),
     )
