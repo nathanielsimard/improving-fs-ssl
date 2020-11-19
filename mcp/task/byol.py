@@ -99,14 +99,13 @@ class BYOLTask(Task):
 
 def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: float):
     tmp = deepcopy(module_momentum)
-    for param, param_momentum in zip(module.parameters(), module_momentum.parameters()):
-        param_momentum.__setstate__(
-            torch.tensor(param_momentum * tau + param * (1 - tau))
-        )
+    params = list(module.parameters())
+    params_momentum = list(module_momentum.parameters())
+    for i in range(len(params)):
+        params_momentum[i] = params_momentum[i] * tau + params[i] * (1 - tau)
 
     for p, p1 in zip(module_momentum.parameters(), tmp.parameters()):
-        print(p)
-        print(p1)
+        print("i")
         assert (p == p1).sum() != (p == p).sum()
 
 
