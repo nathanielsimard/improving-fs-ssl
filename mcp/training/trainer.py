@@ -71,8 +71,8 @@ class Trainer(object):
 
         for epoch in range(starting_epoch + 1, self.epochs + 1):
             self._training_phase(epoch)
-            # self._training_support_phase(epoch)
-            # self._evaluation_phase(epoch)
+            self._training_support_phase(epoch)
+            self._evaluation_phase(epoch)
 
     def _training_phase(self, epoch):
         self.training_loop.fit_one(
