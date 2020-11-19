@@ -68,8 +68,6 @@ class RotationTask(Task):
 
         metric = self.metric(x, y)
         loss = self.loss(x, y)
-        print(y)
-        print(loss)
 
         return TaskOutput(loss=loss, metric=metric, metric_name="acc")
 
