@@ -68,8 +68,8 @@ class ResultLogger(object):
         num_batches: int,
     ):
         def format(value: float) -> str:
-            if value < 0.001:
-                return f"{value:e}"
+            if value < 0.001 and value != 0:
+                return f"{value:.3e}"
             else:
                 return f"{value:.3f}"
 
