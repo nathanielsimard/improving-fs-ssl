@@ -65,7 +65,7 @@ class RotationTask(Task):
         x, y = self.batch_rotation.rotate(x)
         x = encoder(x)
         x = self.output(x)
-        print(self.output.requires_grad)
+        print(self.output.parameters()[0].requires_grad)
 
         metric = self.metric(x, y)
         loss = self.loss(x, y)
