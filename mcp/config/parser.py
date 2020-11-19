@@ -21,10 +21,10 @@ from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
 _DEFAULT_OPTIMIZER_CONFIG = {
-    "type": "adam",
+    "type": "sgd",
     "sgd": {"momentum": 0.9},
     "weight_decay": 5e-4,
-    "learning_rate": 0.0005,
+    "learning_rate": 0.05,
 }
 
 _DEFAULT_SCHEDULER_CONFIG = {
@@ -55,7 +55,7 @@ DEFAULT_CONFIG: ConfigType = {
         "epochs": 90,
         "support_training": {"max_epochs": 150, "min_loss": 0.001},
     },
-    "task": {"types": ["rotation", "byol"], "byol": {"head_size": 128, "tau": 0.99}},
+    "task": {"types": ["byol"], "byol": {"head_size": 128, "tau": 0.99}},
     "model": {"embedding_size": 256},
     "evaluation": {"num_iterations": 25},
 }
