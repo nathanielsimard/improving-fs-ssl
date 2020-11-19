@@ -9,6 +9,7 @@ from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.metric import Accuracy
 from mcp.task.base import Task, TaskOutput
 from mcp.task.compute import TaskCompute
+from mcp.model.mlp import MLP
 
 
 class BatchRotation(object):
@@ -44,7 +45,9 @@ class RotationTask(Task):
     ):
         super().__init__()
         self.metric = Accuracy()
-        self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
+        self.output = MLP(
+            embedding_size, embedding_size, batch_rotation.num_classes, 2, 0.1
+        )
         self.loss = nn.CrossEntropyLoss()
         self.compute = compute
         self.batch_rotation = batch_rotation
