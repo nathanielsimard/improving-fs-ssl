@@ -31,6 +31,5 @@ class MLP(nn.Module):
             x = self.dropout(x)
 
         x = self.output(x)
-        x = self.activation(x)
 
         return x
