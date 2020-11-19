@@ -52,7 +52,7 @@ DEFAULT_CONFIG: ConfigType = {
         "support": _SUPPORT_SCHEDULER_CONFIG,
     },
     "trainer": {
-        "epochs": 90,
+        "epochs": 25,
         "support_training": {"max_epochs": 150, "min_loss": 0.001},
     },
     "task": {
