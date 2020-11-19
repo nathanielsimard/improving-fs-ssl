@@ -1,5 +1,4 @@
 import abc
-from copy import deepcopy
 from typing import NamedTuple, Optional
 
 import torch
@@ -15,9 +14,9 @@ class TaskOutput(NamedTuple):
 
 
 class Task(Model):
-    def __init__(self):
-        super().__init__()
-        self._init_state = deepcopy(self.state_dict())
+    @abc.abstractproperty
+    def initial_state_dict(self):
+        pass
 
     @abc.abstractproperty
     def name(self) -> str:
@@ -31,4 +30,4 @@ class Task(Model):
         pass
 
     def reset(self):
-        self.load_state_dict(self._init_state)
+        self.load_state_dict(self.initial_state_dict)

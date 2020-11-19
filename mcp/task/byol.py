@@ -40,11 +40,16 @@ class BYOLTask(Task):
         self._momentum_encoder: Optional[nn.Module] = None
         self._momentum_head_projection: Optional[nn.Module] = None
 
+        self._initial_state_dict = self.state_dict()
         self._training = True
 
     @property
     def name(self):
         return "BYOL"
+
+    @property
+    def initial_state_dict(self):
+        return self._initial_state_dict
 
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None

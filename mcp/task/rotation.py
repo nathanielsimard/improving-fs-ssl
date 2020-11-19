@@ -44,18 +44,21 @@ class RotationTask(Task):
     ):
         super().__init__()
         self.metric = Accuracy()
-        # self.output = MLP(
-        #     embedding_size, embedding_size, batch_rotation.num_classes, 1, 0.0
-        # )
         self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.compute = compute
         self.batch_rotation = batch_rotation
+
+        self._initial_state_dict = self.state_dict()
         self._training = True
 
     @property
     def name(self):
         return "Rotation"
+
+    @property
+    def initial_state_dict(self):
+        return self._initial_state_dict
 
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
