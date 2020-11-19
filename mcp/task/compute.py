@@ -34,8 +34,7 @@ class TaskCompute(object):
             return x
 
     def cache_clear(self):
-        print("clear")
-        self._cache = {}
+        self._cache.clear()
 
     def transform(self, x: torch.Tensor, training: bool):
         transforms = self.transforms_train if training else self.transforms_eval
