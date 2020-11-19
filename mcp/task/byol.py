@@ -19,7 +19,7 @@ class BYOLTask(Task):
     ):
         super().__init__()
         self.compute = compute
-        self.loss = nn.MSELoss()
+        self.loss = nn.MSELoss(reduction="sum")
         self.projection_head = MLP(
             embedding_size, head_size, head_size, head_n_hiddens, dropout
         )
