@@ -63,7 +63,7 @@ class BYOLTask(Task):
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
-        self._update_momentum_model(encoder, self.head_projection)
+        self._update_momentum_model(encoder, self.trainable.head_projection)
 
         x_original = x
 
