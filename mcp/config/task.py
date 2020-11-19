@@ -16,7 +16,8 @@ class BYOLConfig(NamedTuple):
 
 
 class TaskConfig(NamedTuple):
-    types: List[TaskType]
+    train: List[TaskType]
+    valid: List[TaskType]
     byol: BYOLConfig
 
 
@@ -24,7 +25,9 @@ def parse(config: ConfigType) -> TaskConfig:
     config = config["task"]
 
     return TaskConfig(
-        types=[TaskType(t) for t in config["types"]], byol=_parse_byol(config)
+        train=[TaskType(t) for t in config["train"]],
+        valid=[TaskType(t) for t in config["valid"]],
+        byol=_parse_byol(config),
     )
 
 

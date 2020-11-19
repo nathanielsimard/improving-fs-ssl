@@ -65,7 +65,6 @@ class TaskModule(Module):
 
     @provider
     @inject
-    @singleton
     def provide_train_supervised_task(
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskTrain:
@@ -75,7 +74,6 @@ class TaskModule(Module):
 
     @provider
     @inject
-    @singleton
     def provide_valid_supervised_task(
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskValid:
