@@ -20,7 +20,7 @@ IMAGES_STD = (0.2675, 0.2565, 0.2761)
 CLASSES_TRAIN = [
     "train",
     "skyscraper",
-    "turtle",
+#    "turtle",
 #    "raccoon",
 #    "spider",
 #    "orange",

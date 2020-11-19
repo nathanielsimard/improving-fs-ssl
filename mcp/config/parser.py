@@ -56,7 +56,7 @@ DEFAULT_CONFIG: ConfigType = {
         "support_training": {"max_epochs": 150, "min_loss": 0.001},
     },
     "task": {
-        "types": ["rotation"],
+        "types": ["rotation", "byol"],
         "byol": {"head_size": 128, "head_n_hiddens": 1, "dropout": 0.25},
     },
     "model": {"embedding_size": 256},
