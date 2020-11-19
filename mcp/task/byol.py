@@ -11,6 +11,7 @@ from mcp.task.compute import TaskCompute
 
 class Head(nn.Module):
     def __init__(self, size_input: int, size_hidden: int, size_output: int):
+        super().__init__()
         self.input = nn.Linear(size_input, size_hidden)
         self.output = nn.Linear(size_hidden, size_output)
         self.batch_norm = nn.BatchNorm1d(size_hidden)
@@ -78,7 +79,7 @@ class BYOLTask(Task):
 
     def _update_momentum_model(self, encoder: nn.Module, head_projection: nn.Module):
         if self._momentum_encoder is None:
-            self._momentum_encode = _initialize_momentum_module(encoder)
+            self._momentum_encoder = _initialize_momentum_module(encoder)
 
         if self._momentum_head_projection is None:
             self._momentum_head_projection = _initialize_momentum_module(
