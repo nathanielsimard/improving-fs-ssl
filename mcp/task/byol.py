@@ -103,6 +103,8 @@ def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: 
         param_momentum = torch.tensor(param_momentum * tau + param * (1 - tau))
 
     for p, p1 in zip(module_momentum.parameters(), tmp.parameters()):
+        print(p)
+        print(p1)
         assert (p == p1).sum() != (p == p).sum()
 
 
