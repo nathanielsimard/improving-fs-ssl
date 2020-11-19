@@ -39,8 +39,8 @@ class BYOLTask(Task):
 
         self._momentum_encoder: Optional[nn.Module] = None
         self._momentum_head_projection: Optional[nn.Module] = None
-
         self._initial_state_dict = self.state_dict()
+
         self._training = True
 
     @property
@@ -100,6 +100,8 @@ class BYOLTask(Task):
     def state_dict(self):
         value = {}
         value["default"] = super().state_dict()
+        _remove_key(value["default"], "_momentum_encoder")
+        _remove_key(value["default"], "_momentum_head_projection")
         value["momentum_encoder"] = _state_dict_or_none(self._momentum_encoder)
         value["momentum_head_projection"] = _state_dict_or_none(
             self._momentum_head_projection
@@ -111,6 +113,13 @@ class BYOLTask(Task):
         super().load_state_dict(value["default"])
         self._momentum_encode = value["momentum_encoder"]
         self._momentum_head_projection = value["momentum_head_projection"]
+
+
+def _remove_key(state_dict: Dict, key: str):
+    try:
+        del state_dict[key]
+    except KeyError:
+        pass
 
 
 def _state_dict_or_none(module: Optional[nn.Module]) -> Optional[Dict]:
