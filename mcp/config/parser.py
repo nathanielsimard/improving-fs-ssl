@@ -42,7 +42,7 @@ DEFAULT_CONFIG: ConfigType = {
         "source": "cifar_fs",
         "cifar_fs": {"convert_labels": True},
     },
-    "dataloader": {"batch_size": 32, "shuffle": True, "num_workers": cpu_count()},
+    "dataloader": {"batch_size": 64, "shuffle": True, "num_workers": cpu_count()},
     "optimizer": {
         "train": _DEFAULT_OPTIMIZER_CONFIG,
         "support": _DEFAULT_OPTIMIZER_CONFIG,
