@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, Optional
+from typing import Optional
 
 import torch
 from torch import nn
@@ -87,11 +87,11 @@ class BYOLTask(Task):
 
     def _update_momentum_model(self, encoder: nn.Module, head_projection: nn.Module):
         if self._momentum_encoder is None:
-            print("Module is None")
+            print("Module encoder is None")
             self._momentum_encoder = _initialize_momentum_module(encoder)
 
         if self._momentum_head_projection is None:
-            print("Module is None")
+            print("Module head projection is None")
             self._momentum_head_projection = _initialize_momentum_module(
                 head_projection
             )
@@ -118,11 +118,11 @@ class BYOLTask(Task):
 
     def load_state_dict(self, value):
         self.trainable.load_state_dict(value["trainable"])
-        self._momentum_encode = value["momentum_encoder"]
+        self._momentum_encoder = value["momentum_encoder"]
         self._momentum_head_projection = value["momentum_head_projection"]
 
 
-def _state_dict_or_none(module: Optional[nn.Module]) -> Optional[Dict]:
+def _state_dict_or_none(module: Optional[nn.Module]):
     if module is None:
         return None
 

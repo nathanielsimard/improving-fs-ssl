@@ -1,7 +1,7 @@
 import unittest
 
-from mcp.task.byol import BYOLTask
 from mcp.data.dataset.transforms import KorniaTransforms
+from mcp.task.byol import BYOLTask
 from mcp.task.compute import TaskCompute
 
 MEAN = (0.5071, 0.4867, 0.4408)
