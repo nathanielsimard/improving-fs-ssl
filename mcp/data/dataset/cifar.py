@@ -137,7 +137,7 @@ class CifarFsDataset(Dataset):
         self.transform = transform
 
     def __len__(self):
-        return int(0.1 * len(self.dataset))
+        return int(0.1 * len(self.dataset)) + 1
 
     def __getitem__(self, index: int):
         img, label = self.dataset[index]
