@@ -57,7 +57,7 @@ DEFAULT_CONFIG: ConfigType = {
     },
     "task": {
         "types": ["byol"],
-        "byol": {"head_size": 128, "head_n_hiddens": 1, "tau": 0.9},
+        "byol": {"head_size": 128, "head_n_hiddens": 1, "tau": 0.0},
     },
     "model": {"embedding_size": 256},
     "evaluation": {"num_iterations": 25},
