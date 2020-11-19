@@ -13,7 +13,7 @@ class TaskType(Enum):
 class BYOLConfig(NamedTuple):
     head_size: int
     head_n_hiddens: int
-    dropout: float
+    tau: float
 
 
 class TaskConfig(NamedTuple):
@@ -35,5 +35,5 @@ def _parse_byol(config: ConfigType) -> BYOLConfig:
     return BYOLConfig(
         head_size=config["head_size"],
         head_n_hiddens=config["head_n_hiddens"],
-        dropout=config["dropout"],
+        tau=config["tau"],
     )

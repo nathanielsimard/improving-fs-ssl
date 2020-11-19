@@ -9,7 +9,6 @@ from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.metric import Accuracy
 from mcp.task.base import Task, TaskOutput
 from mcp.task.compute import TaskCompute
-from mcp.model.mlp import MLP
 
 
 class BatchRotation(object):

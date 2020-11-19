@@ -57,7 +57,7 @@ DEFAULT_CONFIG: ConfigType = {
     },
     "task": {
         "types": ["rotation", "byol"],
-        "byol": {"head_size": 128, "head_n_hiddens": 1, "dropout": 0},
+        "byol": {"head_size": 128, "head_n_hiddens": 1, "tau": 0.99},
     },
     "model": {"embedding_size": 256},
     "evaluation": {"num_iterations": 25},

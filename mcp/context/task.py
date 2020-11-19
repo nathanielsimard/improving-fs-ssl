@@ -63,7 +63,7 @@ class TaskModule(Module):
             compute,
             self.config.task.byol.head_size,
             self.config.task.byol.head_n_hiddens,
-            self.config.task.byol.dropout,
+            self.config.task.byol.tau,
         )
 
     @provider
