@@ -45,10 +45,10 @@ class RotationTask(Task):
     ):
         super().__init__()
         self.metric = Accuracy()
-        # self.output = MLP(
-        #     embedding_size, embedding_size, batch_rotation.num_classes, 2, 0.0
-        # )
-        self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
+        self.output = MLP(
+            embedding_size, embedding_size, batch_rotation.num_classes, 2, 0.0
+        )
+        # self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.compute = compute
         self.batch_rotation = batch_rotation
@@ -65,6 +65,7 @@ class RotationTask(Task):
         x, y = self.batch_rotation.rotate(x)
         x = encoder(x)
         x = self.output(x)
+        print(self.output.require_grad)
 
         metric = self.metric(x, y)
         loss = self.loss(x, y)
