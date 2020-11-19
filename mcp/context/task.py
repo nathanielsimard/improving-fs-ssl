@@ -96,7 +96,7 @@ class TaskModule(Module):
     @singleton
     def provide_train_tasks(self, injector: Injector) -> TasksTrain:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.task.types  # type: ignore
+            injector.get(self._get_train_class(t)) for t in self.config.task.train  # type: ignore
         ]
 
     @multiprovider
@@ -104,7 +104,7 @@ class TaskModule(Module):
     @singleton
     def provide_valid_tasks(self, injector: Injector) -> TasksValid:
         return [  # type: ignore
-            injector.get(self._get_valid_class(t)) for t in self.config.task.types  # type: ignore
+            injector.get(self._get_valid_class(t)) for t in self.config.task.valid  # type: ignore
         ]
 
     def _get_train_class(self, task: TaskType):
