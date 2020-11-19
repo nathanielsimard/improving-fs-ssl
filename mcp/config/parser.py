@@ -21,10 +21,10 @@ from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
 _DEFAULT_OPTIMIZER_CONFIG = {
-    "type": "sgd",
+    "type": "adam",
     "sgd": {"momentum": 0.9},
     "weight_decay": 5e-4,
-    "learning_rate": 0.05,
+    "learning_rate": 0.005,
 }
 
 _DEFAULT_SCHEDULER_CONFIG = {
