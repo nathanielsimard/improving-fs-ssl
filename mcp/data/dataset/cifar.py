@@ -141,7 +141,7 @@ class CifarFsDataset(Dataset):
         print(ori)
         new = (0.1 * ori) + 32
         print(new)
-        return new
+        return int(new)
 
     def __getitem__(self, index: int):
         img, label = self.dataset[index]
