@@ -28,11 +28,7 @@ class Head(nn.Module):
 
 class BYOLTask(Task):
     def __init__(
-        self,
-        embedding_size: int,
-        compute: TaskCompute,
-        head_size: int,
-        tau: float,
+        self, embedding_size: int, compute: TaskCompute, head_size: int, tau: float,
     ):
         super().__init__()
         self.compute = compute
@@ -84,10 +80,10 @@ class BYOLTask(Task):
                 head_projection
             )
 
-        # _update_momentum_module(encoder, self._momentum_encoder, self.tau)
-        # _update_momentum_module(
-        #     head_projection, self._momentum_head_projection, self.tau
-        # )
+        _update_momentum_module(encoder, self._momentum_encoder, self.tau)
+        _update_momentum_module(
+            head_projection, self._momentum_head_projection, self.tau
+        )
 
     def _loss(self, x: torch.Tensor, x_prime: torch.Tensor) -> torch.Tensor:
         x = x / torch.norm(x, dim=-1, keepdim=True)
