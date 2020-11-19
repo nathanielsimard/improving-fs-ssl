@@ -99,13 +99,18 @@ class BYOLTask(Task):
 
 def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: float):
     tmp = deepcopy(module_momentum)
-    params = list(module.parameters())
-    params_momentum = list(module_momentum.parameters())
-    for i in range(len(params)):
-        params_momentum[i] = params_momentum[i] * tau + params[i] * (1 - tau)
+
+    state_module = module.state_dict()
+    state_momentum = module_momentum.state_dict()
+
+    for i in range(len(state_module["params"])):
+        state_momentum["params"][i] = state_momentum["params"][i] * tau + state_module[
+            "params"
+        ][i] * (1 - tau)
+
+    module_momentum.load_state_dict(state_momentum)
 
     for p, p1 in zip(module_momentum.parameters(), tmp.parameters()):
-        print("i")
         assert (p == p1).sum() != (p == p).sum()
 
 
