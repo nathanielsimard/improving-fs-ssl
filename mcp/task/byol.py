@@ -78,27 +78,30 @@ class BYOLTask(Task):
 
     def _update_momentum_model(self, encoder: nn.Module, head_projection: nn.Module):
         if self._momentum_encoder is None:
-            self._momentum_encode = self._initialize_momentum_module(encoder)
-        self._update_momentum_module(encoder, self._momentum_encoder)
+            self._momentum_encode = _initialize_momentum_module(encoder)
 
         if self._momentum_head_projection is None:
-            self._momentum_head_projection = self._initialize_momentum_module(
+            self._momentum_head_projection = _initialize_momentum_module(
                 head_projection
             )
-        self._update_momentum_module(head_projection, self._momentum_head_projection)
 
-    def _update_momentum_module(self, module: nn.Module, module_momentum):
-        for param, param_momentum in zip(
-            module.parameters(), module_momentum.parameters()
-        ):
-            param_momentum = self.tau * param_momentum + (1 - self.tau) * param
-
-    def _initialize_momentum_module(self, module: nn.Module) -> nn.Module:
-        momentum_module = deepcopy(module)
-        freeze_weights(momentum_module)
-        return momentum_module
+        _update_momentum_module(encoder, self._momentum_encoder, self.tau)
+        _update_momentum_module(
+            head_projection, self._momentum_head_projection, self.tau
+        )
 
     def _loss(self, x: torch.Tensor, x_prime: torch.Tensor) -> torch.Tensor:
         x = x / torch.norm(x, dim=-1, keepdim=True)
         x_prime = x_prime / torch.norm(x_prime, dim=-1, keepdim=True)
         return self.loss(x, x_prime)
+
+
+def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: float):
+    for param, param_momentum in zip(module.parameters(), module_momentum.parameters()):
+        param_momentum = tau * param_momentum + (1 - tau) * param
+
+
+def _initialize_momentum_module(module: nn.Module) -> nn.Module:
+    momentum_module = deepcopy(module)
+    freeze_weights(momentum_module)
+    return momentum_module
