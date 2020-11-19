@@ -55,10 +55,7 @@ DEFAULT_CONFIG: ConfigType = {
         "epochs": 25,
         "support_training": {"max_epochs": 150, "min_loss": 0.001},
     },
-    "task": {
-        "types": ["byol"],
-        "byol": {"head_size": 128, "head_n_hiddens": 1, "tau": 0.9},
-    },
+    "task": {"types": ["byol"], "byol": {"head_size": 128, "tau": 0.99}},
     "model": {"embedding_size": 256},
     "evaluation": {"num_iterations": 25},
 }
