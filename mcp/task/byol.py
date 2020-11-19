@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, Dict
 
 import torch
 from torch import nn
@@ -89,6 +89,28 @@ class BYOLTask(Task):
         x = x / torch.norm(x, dim=-1, keepdim=True)
         x_prime = x_prime / torch.norm(x_prime, dim=-1, keepdim=True)
         return self.loss(x, x_prime)
+
+    def state_dict(self):
+        value = {}
+        value["default"] = super().state_dict()
+        value["momentum_encoder"] = _state_dict_or_none(self._momentum_encoder)
+        value["momentum_head_projection"] = _state_dict_or_none(
+            self._momentum_head_projection
+        )
+
+        return value
+
+    def load_state_dict(self, value):
+        super().load_state_dict(value["default"])
+        self._momentum_encode = value["momentum_encoder"]
+        self._momentum_head_projection = value["momentum_head_projection"]
+
+
+def _state_dict_or_none(module: Optional[nn.Module]) -> Optional[Dict]:
+    if module is None:
+        return None
+
+    return module.state_dict()
 
 
 def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: float):

@@ -48,7 +48,6 @@ class TaskModule(Module):
 
     @provider
     @inject
-    @singleton
     def provide_rotation_task(
         self, compute: TaskCompute, batch_rotation: BatchRotation
     ) -> RotationTask:
@@ -56,7 +55,6 @@ class TaskModule(Module):
 
     @provider
     @inject
-    @singleton
     def provide_byol_task(self, compute: TaskCompute) -> BYOLTask:
         return BYOLTask(
             self.config.model.embedding_size,
