@@ -87,11 +87,9 @@ class BYOLTask(Task):
 
     def _update_momentum_model(self, encoder: nn.Module, head_projection: nn.Module):
         if self._momentum_encoder is None:
-            print("Module encoder is None")
             self._momentum_encoder = _initialize_momentum_module(encoder)
 
         if self._momentum_head_projection is None:
-            print("Module head projection is None")
             self._momentum_head_projection = _initialize_momentum_module(
                 head_projection
             )
