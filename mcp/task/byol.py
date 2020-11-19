@@ -46,7 +46,7 @@ class BYOLTask(Task):
         # x_prime = self.projection_head(x_prime)
         # x_prime = self.norm(x_prime)
 
-        loss = self._loss(x, x_prime)
+        loss = 100 * self._loss(x, x_prime)
         metric = loss.cpu().detach().item()
 
         return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm")
