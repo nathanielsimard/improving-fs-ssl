@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import torch
 from torch import nn

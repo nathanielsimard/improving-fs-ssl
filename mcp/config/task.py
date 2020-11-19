@@ -31,7 +31,4 @@ def parse(config: ConfigType) -> TaskConfig:
 def _parse_byol(config: ConfigType) -> BYOLConfig:
     config = config["byol"]
 
-    return BYOLConfig(
-        head_size=config["head_size"],
-        tau=config["tau"],
-    )
+    return BYOLConfig(head_size=config["head_size"], tau=config["tau"],)
