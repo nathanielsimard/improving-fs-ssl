@@ -26,6 +26,13 @@ class Head(nn.Module):
         return x
 
 
+class TrainableModule(nn.Module):
+    def __init__(self, head_projection: nn.Module, head_prediction: nn.Module):
+        super().__init__()
+        self.head_projection = head_projection
+        self.head_prediction = head_prediction
+
+
 class BYOLTask(Task):
     def __init__(
         self, embedding_size: int, compute: TaskCompute, head_size: int, tau: float,
@@ -34,8 +41,10 @@ class BYOLTask(Task):
         self.compute = compute
         self.tau = tau
         self.loss = nn.MSELoss()
-        self.head_projection = Head(embedding_size, head_size, head_size)
-        self.head_prediction = Head(head_size, head_size, head_size)
+        head_projection = Head(embedding_size, head_size, head_size)
+        head_prediction = Head(head_size, head_size, head_size)
+
+        self.trainable = TrainableModule(head_projection, head_prediction)
 
         self._momentum_encoder: Optional[nn.Module] = None
         self._momentum_head_projection: Optional[nn.Module] = None
@@ -60,8 +69,8 @@ class BYOLTask(Task):
 
         x = self.compute.cache_transform(x_original, self._training)
         x = self.compute.cache_forward(x, encoder)
-        x = self.head_projection(x)
-        x = self.head_prediction(x)
+        x = self.trainable.head_projection(x)
+        x = self.trainable.head_prediction(x)
 
         x_prime = self.compute.transform(x_original, self._training)
         x_prime = self._momentum_encoder(x_prime)  # type: ignore
@@ -99,9 +108,7 @@ class BYOLTask(Task):
 
     def state_dict(self):
         value = {}
-        value["default"] = super().state_dict()
-        _remove_key(value["default"], "_momentum_encoder")
-        _remove_key(value["default"], "_momentum_head_projection")
+        value["trainable"] = self.trainable.state_dict()
         value["momentum_encoder"] = _state_dict_or_none(self._momentum_encoder)
         value["momentum_head_projection"] = _state_dict_or_none(
             self._momentum_head_projection
@@ -110,16 +117,9 @@ class BYOLTask(Task):
         return value
 
     def load_state_dict(self, value):
-        super().load_state_dict(value["default"])
+        self.trainable.load_state_dict(value["trainable"])
         self._momentum_encode = value["momentum_encoder"]
         self._momentum_head_projection = value["momentum_head_projection"]
-
-
-def _remove_key(state_dict: Dict, key: str):
-    try:
-        del state_dict[key]
-    except KeyError:
-        pass
 
 
 def _state_dict_or_none(module: Optional[nn.Module]) -> Optional[Dict]:
