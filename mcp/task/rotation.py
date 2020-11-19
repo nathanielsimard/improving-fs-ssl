@@ -81,4 +81,5 @@ class RotationTask(Task):
 
     def train(self, mode: bool = True):
         self._training = mode
+        print(mode)
         return super().train(mode)
