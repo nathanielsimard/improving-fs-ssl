@@ -48,11 +48,17 @@ class RotationTask(Task):
         self.loss = nn.CrossEntropyLoss()
         self.compute = compute
         self.batch_rotation = batch_rotation
+
+        self._initial_state_dict = self.state_dict()
         self._training = True
 
     @property
     def name(self):
         return "Rotation"
+
+    @property
+    def initial_state_dict(self):
+        return self._initial_state_dict
 
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None

@@ -67,8 +67,14 @@ class ResultLogger(object):
         batch_idx: int,
         num_batches: int,
     ):
+        def format(value: float) -> str:
+            if value < 0.001 and value != 0:
+                return f"{value:.3e}"
+            else:
+                return f"{value:.3f}"
+
         info = [
-            f"{n}: loss={o.loss:.3f} {o.metric_name}={o.metric:.3f}"
+            f"{n}: loss={format(o.loss.item())} {o.metric_name}={format(o.metric)}"
             for n, o in zip(task_names, outputs)
         ]
 

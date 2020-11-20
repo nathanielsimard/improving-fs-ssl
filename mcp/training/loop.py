@@ -73,6 +73,11 @@ class TrainingLoop(object):
         # Don't change default optimizer and scheduler states
         optimizer_state_dict = deepcopy(optimizer.state_dict())
         scheduler_state_dict = deepcopy(scheduler.state_dict())
+
+        # Reset tasks states
+        for task in tasks:
+            task.reset()
+
         model.freeze_weights()
 
         while (

@@ -5,10 +5,11 @@ import torch
 from injector import Injector, Module, inject, multiprovider, provider, singleton
 
 from mcp.config.parser import ExperimentConfig
-from mcp.config.trainer import TaskType
+from mcp.config.task import TaskType
 from mcp.data.dataset.dataset import DatasetMetadata
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.task.base import Task
+from mcp.task.byol import BYOLTask
 from mcp.task.compute import TaskCompute
 from mcp.task.rotation import BatchRotation, RotationTask
 from mcp.task.supervised import SupervisedTask
@@ -30,6 +31,7 @@ class TaskModule(Module):
         self._default_task_classes = {
             TaskType.ROTATION: RotationTask,
             TaskType.SUPERVISED: SupervisedTask,
+            TaskType.BYOL: BYOLTask,
         }
 
     @provider
@@ -46,7 +48,6 @@ class TaskModule(Module):
 
     @provider
     @inject
-    @singleton
     def provide_rotation_task(
         self, compute: TaskCompute, batch_rotation: BatchRotation
     ) -> RotationTask:
@@ -54,7 +55,16 @@ class TaskModule(Module):
 
     @provider
     @inject
-    @singleton
+    def provide_byol_task(self, compute: TaskCompute) -> BYOLTask:
+        return BYOLTask(
+            self.config.model.embedding_size,
+            compute,
+            self.config.task.byol.head_size,
+            self.config.task.byol.tau,
+        )
+
+    @provider
+    @inject
     def provide_train_supervised_task(
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskTrain:
@@ -64,7 +74,6 @@ class TaskModule(Module):
 
     @provider
     @inject
-    @singleton
     def provide_valid_supervised_task(
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskValid:
@@ -87,7 +96,7 @@ class TaskModule(Module):
     @singleton
     def provide_train_tasks(self, injector: Injector) -> TasksTrain:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.trainer.tasks  # type: ignore
+            injector.get(self._get_train_class(t)) for t in self.config.task.train  # type: ignore
         ]
 
     @multiprovider
@@ -95,7 +104,7 @@ class TaskModule(Module):
     @singleton
     def provide_valid_tasks(self, injector: Injector) -> TasksValid:
         return [  # type: ignore
-            injector.get(self._get_valid_class(t)) for t in self.config.trainer.tasks  # type: ignore
+            injector.get(self._get_valid_class(t)) for t in self.config.task.valid  # type: ignore
         ]
 
     def _get_train_class(self, task: TaskType):

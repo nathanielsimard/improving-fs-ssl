@@ -17,11 +17,16 @@ class SupervisedTask(Task):
         self.output = nn.Linear(embedding_size, num_classes)
         self.loss = nn.CrossEntropyLoss()
 
+        self._initial_state_dict = self.state_dict()
         self._training = True
 
     @property
     def name(self):
         return "Supervised"
+
+    @property
+    def initial_state_dict(self):
+        return self._initial_state_dict
 
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None

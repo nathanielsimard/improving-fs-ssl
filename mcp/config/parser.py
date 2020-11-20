@@ -15,6 +15,8 @@ from mcp.config.optimizer import OptimizerConfig
 from mcp.config.optimizer import parse as parse_optimizer
 from mcp.config.scheduler import SchedulerConfig
 from mcp.config.scheduler import parse as parse_scheduler
+from mcp.config.task import TaskConfig
+from mcp.config.task import parse as parse_task
 from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
 
@@ -40,7 +42,7 @@ DEFAULT_CONFIG: ConfigType = {
         "source": "cifar_fs",
         "cifar_fs": {"convert_labels": True},
     },
-    "dataloader": {"batch_size": 32, "shuffle": True, "num_workers": cpu_count()},
+    "dataloader": {"batch_size": 64, "shuffle": True, "num_workers": cpu_count()},
     "optimizer": {
         "train": _DEFAULT_OPTIMIZER_CONFIG,
         "support": _DEFAULT_OPTIMIZER_CONFIG,
@@ -51,8 +53,12 @@ DEFAULT_CONFIG: ConfigType = {
     },
     "trainer": {
         "epochs": 90,
-        "tasks": ["supervised", "rotation"],
-        "support_training": {"max_epochs": 150, "min_loss": 0.001},
+        "support_training": {"max_epochs": 300, "min_loss": 0.01},
+    },
+    "task": {
+        "train": ["rotation", "byol"],
+        "valid": ["supervised"],
+        "byol": {"head_size": 128, "tau": 0.99},
     },
     "model": {"embedding_size": 256},
     "evaluation": {"num_iterations": 25},
@@ -67,6 +73,7 @@ class ExperimentConfig(NamedTuple):
     trainer: TrainerConfig
     model: ModelConfig
     evaluation: EvaluationConfig
+    task: TaskConfig
 
 
 def parse(
@@ -91,4 +98,5 @@ def parse(
         trainer=parse_trainer(config),
         model=parse_model(config),
         evaluation=parse_evaluation(config),
+        task=parse_task(config),
     )

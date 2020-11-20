@@ -17,9 +17,13 @@ class Model(abc.ABC, nn.Module):
         self.load_state_dict(torch.load(file_path, map_location=device))
 
     def freeze_weights(self):
-        for param in self.parameters():
-            param.requires_grad = False
+        freeze_weights(self)
 
     def defreeze_weights(self):
         for param in self.parameters():
             param.requires_grad = True
+
+
+def freeze_weights(module: nn.Module):
+    for param in module.parameters():
+        param.requires_grad = False

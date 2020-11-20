@@ -15,6 +15,10 @@ class TaskOutput(NamedTuple):
 
 class Task(Model):
     @abc.abstractproperty
+    def initial_state_dict(self):
+        pass
+
+    @abc.abstractproperty
     def name(self) -> str:
         pass
 
@@ -24,3 +28,6 @@ class Task(Model):
     ) -> TaskOutput:
         """Abstract task definition, receives encoder and input data with optional targets. Returns computed loss."""
         pass
+
+    def reset(self):
+        self.load_state_dict(self.initial_state_dict)

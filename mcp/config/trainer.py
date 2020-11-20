@@ -1,12 +1,6 @@
-from enum import Enum
-from typing import List, NamedTuple
+from typing import NamedTuple
 
 from mcp.config.loader import ConfigType
-
-
-class TaskType(Enum):
-    SUPERVISED = "supervised"
-    ROTATION = "rotation"
 
 
 class SupportTrainingConfig(NamedTuple):
@@ -16,16 +10,13 @@ class SupportTrainingConfig(NamedTuple):
 
 class TrainerConfig(NamedTuple):
     epochs: int
-    tasks: List[TaskType]
     support_training: SupportTrainingConfig
 
 
 def parse(config: ConfigType) -> TrainerConfig:
     config = config["trainer"]
     return TrainerConfig(
-        epochs=config["epochs"],
-        tasks=[TaskType(t) for t in config["tasks"]],
-        support_training=_parse_support_training(config),
+        epochs=config["epochs"], support_training=_parse_support_training(config),
     )
 
 
