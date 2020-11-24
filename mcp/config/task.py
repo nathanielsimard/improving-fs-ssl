@@ -17,18 +17,24 @@ class BYOLConfig(NamedTuple):
 
 class TaskConfig(NamedTuple):
     train: List[TaskType]
+    weights: List[float]
     valid: List[TaskType]
     byol: BYOLConfig
 
 
 def parse(config: ConfigType) -> TaskConfig:
     config = config["task"]
-
-    return TaskConfig(
+    task_config = TaskConfig(
         train=[TaskType(t) for t in config["train"]],
+        weights=config["weights"],
         valid=[TaskType(t) for t in config["valid"]],
         byol=_parse_byol(config),
     )
+
+    assert len(task_config.train) == len(
+        task_config.weights
+    ), "Number of tasks must match task weights."
+    return task_config
 
 
 def _parse_byol(config: ConfigType) -> BYOLConfig:

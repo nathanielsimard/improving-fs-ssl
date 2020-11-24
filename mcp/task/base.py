@@ -31,3 +31,31 @@ class Task(Model):
 
     def reset(self):
         self.load_state_dict(self.initial_state_dict)
+
+
+class WeightedTask(Task):
+    def __init__(self, task: Task, weight: float):
+        super().__init__()
+        self.task = task
+        self.weight = weight
+
+    @property
+    def initial_state_dict(self):
+        return self.task.initial_state_dict
+
+    @property
+    def name(self) -> str:
+        return "Weighted-" + self.task.name
+
+    def run(
+        self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None,
+    ) -> TaskOutput:
+        output = self.task.run(encoder, x, y=y)
+        return TaskOutput(
+            loss=self.weight * output.loss,
+            metric=output.metric,
+            metric_name=output.metric_name,
+        )
+
+    def reset(self):
+        self.task.load_state_dict(self.initial_state_dict)

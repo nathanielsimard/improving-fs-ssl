@@ -8,7 +8,7 @@ from mcp.config.parser import ExperimentConfig
 from mcp.config.task import TaskType
 from mcp.data.dataset.dataset import DatasetMetadata
 from mcp.data.dataset.transforms import KorniaTransforms
-from mcp.task.base import Task
+from mcp.task.base import Task, WeightedTask
 from mcp.task.byol import BYOLTask
 from mcp.task.compute import TaskCompute
 from mcp.task.rotation import BatchRotation, RotationTask
@@ -96,7 +96,10 @@ class TaskModule(Module):
     @singleton
     def provide_train_tasks(self, injector: Injector) -> TasksTrain:
         return [  # type: ignore
-            injector.get(self._get_train_class(t)) for t in self.config.task.train  # type: ignore
+            WeightedTask(injector.get(self._get_train_class(t)), w)
+            for t, w in zip(
+                self.config.task.train, self.config.task.weights
+            )  # type: ignore
         ]
 
     @multiprovider
