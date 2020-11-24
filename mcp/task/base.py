@@ -57,5 +57,8 @@ class WeightedTask(Task):
             metric_name=output.metric_name,
         )
 
-    def reset(self):
-        self.task.load_state_dict(self.initial_state_dict)
+    def state_dict(self):
+        return self.task.state_dict()
+
+    def load_state_dict(self, value):
+        self.task.load_state_dict(value)
