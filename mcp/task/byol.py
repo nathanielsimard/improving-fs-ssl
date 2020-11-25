@@ -76,7 +76,7 @@ class BYOLTask(Task):
         x_prime = self._momentum_encoder(x_prime)  # type: ignore
         x_prime = self._momentum_head_projection(x_prime)  # type: ignore
 
-        loss = 100 * self._loss(x, x_prime)
+        loss = self._loss(x, x_prime)
         metric = loss.cpu().detach().item()
 
         return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm")
