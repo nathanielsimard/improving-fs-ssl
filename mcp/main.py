@@ -40,6 +40,5 @@ def run_viz(config: ExperimentConfig, result_dir: str, device_str: str):
     device = torch.device(device_str)
     injector = create_injector(config, result_dir, device)
 
-    result = injector.get(ExperimentResult)
-    viz = Vizualization(result)
+    viz = injector.get(Vizualization)
     viz.plot()
