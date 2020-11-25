@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import Callable, List, Optional
 
 import numpy as np
@@ -70,7 +71,7 @@ class ExperimentResult(object):
 
     def records(self, tag: str) -> List[EpochResult]:
         results: List[EpochResult] = []
-        for epoch in range(1, self.config.trainer.epochs + 1):
+        for epoch in range(1, sys.maxsize):
             file_name = os.path.join(self._records_dir, f"{tag}-{epoch}")
             if not os.path.exists(file_name):
                 break

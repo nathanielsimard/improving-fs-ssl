@@ -97,10 +97,10 @@ class EvaluationModule(Module):
 
         return EvaluationLoggers(
             support=ResultLogger(
-                "Evaluation Support", os.path.join(output_dir, "support")
+                "Evaluation Support", os.path.join(output_dir, "test-support")
             ),
             evaluation=ResultLogger(
-                "Evaluation Support", os.path.join(output_dir, "eval")
+                "Evaluation Support", os.path.join(output_dir, "test-eval")
             ),
         )
 
