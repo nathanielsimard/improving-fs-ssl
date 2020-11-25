@@ -5,25 +5,9 @@ import torch
 from torch import nn
 
 from mcp.model.base import freeze_weights
+from mcp.model.utils import BatchNormHead
 from mcp.task.base import Task, TaskOutput
 from mcp.task.compute import TaskCompute
-
-
-class Head(nn.Module):
-    def __init__(self, size_input: int, size_hidden: int, size_output: int):
-        super().__init__()
-        self.input = nn.Linear(size_input, size_hidden)
-        self.output = nn.Linear(size_hidden, size_output)
-        self.batch_norm = nn.BatchNorm1d(size_hidden)
-        self.activation = nn.ReLU()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.input(x)
-        x = self.batch_norm(x)
-        x = self.activation(x)
-        x = self.output(x)
-
-        return x
 
 
 class TrainableModule(nn.Module):
@@ -41,8 +25,8 @@ class BYOLTask(Task):
         self.compute = compute
         self.tau = tau
         self.loss = nn.MSELoss()
-        head_projection = Head(embedding_size, head_size, head_size)
-        head_prediction = Head(head_size, head_size, head_size)
+        head_projection = BatchNormHead(embedding_size, head_size, head_size)
+        head_prediction = BatchNormHead(head_size, head_size, head_size)
 
         self.trainable = TrainableModule(head_projection, head_prediction)
 
