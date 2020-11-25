@@ -97,10 +97,8 @@ class TaskModule(Module):
     def provide_train_tasks(self, injector: Injector) -> TasksTrain:
         return [  # type: ignore
             WeightedTask(injector.get(self._get_train_class(t)), w)
-            for t, w in zip(
-                self.config.task.train, self.config.task.weights
-            )  # type: ignore
-        ]
+            for t, w in zip(self.config.task.train, self.config.task.weights)
+        ]  # type: ignore
 
     @multiprovider
     @inject
