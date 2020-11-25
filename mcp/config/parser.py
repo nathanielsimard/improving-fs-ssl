@@ -51,7 +51,10 @@ DEFAULT_CONFIG: ConfigType = {
         "train": _DEFAULT_SCHEDULER_CONFIG,
         "support": _SUPPORT_SCHEDULER_CONFIG,
     },
-    "trainer": {"epochs": 90, "support_training": {"max_epochs": 300, "min_loss": 0.01}},
+    "trainer": {
+        "epochs": 90,
+        "support_training": {"max_epochs": 300, "min_loss": 0.01}
+    },
     "task": {
         "train": ["rotation", "byol"],
         "valid": ["supervised"],
