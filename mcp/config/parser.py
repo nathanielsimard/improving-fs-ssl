@@ -53,7 +53,7 @@ DEFAULT_CONFIG: ConfigType = {
     },
     "trainer": {
         "epochs": 90,
-        "support_training": {"max_epochs": 300, "min_loss": 0.01}
+        "support_training": {"max_epochs": 300, "min_loss": 0.01},
     },
     "task": {
         "train": ["rotation", "byol"],
