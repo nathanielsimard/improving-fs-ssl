@@ -29,11 +29,11 @@ def plot_metric(output_dir: str, results: ExperimentResult):
         file_name = os.path.join(output_dir, f"metric-{task}-{metric}-eval.png")
         fig.savefig(file_name)
 
-    metric_test_eval = results.metric("test-eval", EpochResult.metric)
+    metric_test_eval = results.metric("eval", EpochResult.metric, train=False)
 
     if len(metric_test_eval) > 0:
-        metric_name_test_eval = results.metric_names("test_eval")[0]
-        task_name_test_eval = results.task_names("test_eval")[0]
+        metric_name_test_eval = results.metric_names("eval", train=False)[0]
+        task_name_test_eval = results.task_names("eval", train=False)[0]
 
         values = np.asarray(metric_test_eval)
         mean = np.mean(values)

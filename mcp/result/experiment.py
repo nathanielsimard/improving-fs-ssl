@@ -44,7 +44,7 @@ class EpochResult(object):
             raise ValueError("Must reduce on something")
 
         if reduce_task is not None:
-            values = [reduce_task(np.asarray(vv), axis=1) for vv in values]
+            values = [reduce_task(np.asarray(vv), axis=-1) for vv in values]
 
         if reduce_iter is not None:
             values = reduce_iter(np.asarray(values), axis=0)
@@ -56,7 +56,8 @@ class ExperimentResult(object):
     def __init__(self, config: ExperimentConfig, output_dir: str):
         self.config = config
         self.output_dir = output_dir
-        self._records_dir = os.path.join(self.output_dir, "train")
+        self._records_dir_train = os.path.join(self.output_dir, "train")
+        self._records_dir_eval = os.path.join(self.output_dir, "evaluation")
 
     def best_epoch(self) -> int:
         losses = self.metric("train", EpochResult.losses)
@@ -69,10 +70,12 @@ class ExperimentResult(object):
         logger.info(f"Found the best epoch to be {epoch} with valid loss {valid_loss}")
         return epoch
 
-    def records(self, tag: str) -> List[EpochResult]:
+    def records(self, tag: str, train: bool = True) -> List[EpochResult]:
+        records_dir = self._records_dir_train if train else self._records_dir_eval
+
         results: List[EpochResult] = []
         for epoch in range(1, sys.maxsize):
-            file_name = os.path.join(self._records_dir, f"{tag}-{epoch}")
+            file_name = os.path.join(records_dir, f"{tag}-{epoch}")
             if not os.path.exists(file_name):
                 break
 
@@ -80,18 +83,18 @@ class ExperimentResult(object):
 
         return results
 
-    def task_names(self, tag: str) -> List[str]:
-        e_records = self.records(tag)[0]
+    def task_names(self, tag: str, train: bool = True) -> List[str]:
+        e_records = self.records(tag, train=train)[0]
         return EpochResult.task_name(e_records.load())
 
-    def metric_names(self, tag: str) -> List[str]:
-        e_records = self.records(tag)[0]
+    def metric_names(self, tag: str, train: bool = True) -> List[str]:
+        e_records = self.records(tag, train)[0]
         return EpochResult.metric_name(e_records.load())
 
     def metric(
-        self, tag: str, metric, reduce_task=np.mean, reduce_iter=np.mean
+        self, tag: str, metric, reduce_task=np.mean, reduce_iter=np.mean, train=True
     ) -> np.ndarray:
-        e_records = self.records(tag)
+        e_records = self.records(tag, train=train)
         return np.asarray(
             [
                 EpochResult.reduce(
