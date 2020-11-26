@@ -7,6 +7,7 @@ from torch import nn
 
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.metric import Accuracy
+from mcp.model.utils import BatchNormHead
 from mcp.task.base import Task, TaskOutput
 from mcp.task.compute import TaskCompute
 
@@ -44,6 +45,7 @@ class RotationTask(Task):
     ):
         super().__init__()
         self.metric = Accuracy()
+        self.head = BatchNormHead(embedding_size, embedding_size, embedding_size)
         self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.compute = compute
@@ -66,6 +68,7 @@ class RotationTask(Task):
         x = self.compute.cache_transform(x, self._training)
         x, y = self.batch_rotation.rotate(x)
         x = encoder(x)
+        x = self.head(x)
         x = self.output(x)
 
         metric = self.metric(x, y)
