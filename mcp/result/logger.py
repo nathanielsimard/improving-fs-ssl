@@ -33,6 +33,10 @@ def load_records_from_file(file_path: str) -> List[List[ResultRecord]]:
 
 
 def load_records(line: str) -> List[ResultRecord]:
+    """Load all records for an iteration.
+
+    The number of records is determined by the number of tasks.
+    """
     objs = json.loads(line)
     return [
         ResultRecord(

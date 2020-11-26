@@ -40,6 +40,7 @@ from mcp.task.compute import TaskCompute
 from mcp.task.supervised import SupervisedTask
 from mcp.training.loop import TrainingLoop
 from mcp.training.trainer import Trainer, TrainerLoggers
+from mcp.viz.base import Vizualization
 
 ValidFewShotDataLoaderFactory = NewType(
     "ValidFewShotDataLoaderFactory", FewShotDataLoaderFactory
@@ -96,10 +97,10 @@ class EvaluationModule(Module):
 
         return EvaluationLoggers(
             support=ResultLogger(
-                "Evaluation Support", os.path.join(output_dir, "support")
+                "Evaluation Support", os.path.join(output_dir, "test-support")
             ),
             evaluation=ResultLogger(
-                "Evaluation Support", os.path.join(output_dir, "eval")
+                "Evaluation Support", os.path.join(output_dir, "test-eval")
             ),
         )
 
@@ -135,6 +136,12 @@ class EvaluationModule(Module):
     @singleton
     def provide_experiment_result(self) -> ExperimentResult:
         return ExperimentResult(self.config, self.output_dir)
+
+    @provider
+    @inject
+    @singleton
+    def provide_vizualization(self, result: ExperimentResult) -> Vizualization:
+        return Vizualization(result)
 
 
 class TrainerModule(Module):

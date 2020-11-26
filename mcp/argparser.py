@@ -32,6 +32,10 @@ def parse_eval_arguments():
     return parser.parse_args()
 
 
+# For now both are the same
+parse_viz_arguments = parse_eval_arguments
+
+
 def _default_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(

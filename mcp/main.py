@@ -7,6 +7,7 @@ from mcp.context.base import create_injector
 from mcp.evaluation import Evaluation
 from mcp.result.experiment import ExperimentResult
 from mcp.training.trainer import Trainer
+from mcp.viz.base import Vizualization
 
 
 def run_train(
@@ -33,3 +34,11 @@ def run_eval(config: ExperimentConfig, result_dir: str, device_str: str):
     evaluation = injector.get(Evaluation)
     result = injector.get(ExperimentResult)
     evaluation.eval(result.best_epoch())
+
+
+def run_viz(config: ExperimentConfig, result_dir: str, device_str: str):
+    device = torch.device(device_str)
+    injector = create_injector(config, result_dir, device)
+
+    viz = injector.get(Vizualization)
+    viz.plot()
