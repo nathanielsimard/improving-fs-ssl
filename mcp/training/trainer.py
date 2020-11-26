@@ -105,6 +105,7 @@ class Trainer(object):
         self._save_checkpoint(epoch, loss)
 
     def _save_checkpoint(self, epoch: int, loss: float):
+        logger.info(f"Saving checkpoint | epoch {epoch} - loss {loss}")
         self.valid_losses.append(loss)
         self.checkpoints.append(epoch)
         self.save(epoch)
@@ -113,6 +114,9 @@ class Trainer(object):
         if len(idxs) > self.num_checkpoints:
             idx = idxs[-1]
             epoch = self.checkpoints[idx]
+            loss = self.valid_losses[idx]
+
+            logger.info(f"Remove checkpoint | epoch {epoch} - loss {loss}")
 
             os.remove(self._trainer_path(epoch))
             os.remove(self._model_path(epoch))

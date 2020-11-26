@@ -44,12 +44,12 @@ DEFAULT_CONFIG: ConfigType = {
     },
     "dataloader": {"batch_size": 64, "shuffle": True, "num_workers": cpu_count()},
     "optimizer": {
-        "train": _DEFAULT_OPTIMIZER_CONFIG,
-        "support": _DEFAULT_OPTIMIZER_CONFIG,
+        "train": deepcopy(_DEFAULT_OPTIMIZER_CONFIG),
+        "support": deepcopy(_DEFAULT_OPTIMIZER_CONFIG),
     },
     "scheduler": {
-        "train": _DEFAULT_SCHEDULER_CONFIG,
-        "support": _SUPPORT_SCHEDULER_CONFIG,
+        "train": deepcopy(_DEFAULT_SCHEDULER_CONFIG),
+        "support": deepcopy(_SUPPORT_SCHEDULER_CONFIG),
     },
     "trainer": {
         "epochs": 90,

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -12,10 +12,13 @@ def line_plot(
     values_eval: np.ndarray,
     y_label: str,
     x_label: str = "Epoch",
-    bbox_to_anchor=(0.90, 0.88),
     y_int: bool = False,
     x_int: bool = True,
 ) -> plt.Figure:
+    if len(values_train) > 0:
+        bbox_to_anchor = _legend_position(values_train)
+    else:
+        bbox_to_anchor = _legend_position(values_eval)
 
     fig = plt.figure()
     ax = fig.subplots()
@@ -41,3 +44,10 @@ def line_plot(
 
     fig.legend(bbox_to_anchor=bbox_to_anchor)
     return fig
+
+
+def _legend_position(values: np.ndarray) -> Tuple[float, float]:
+    if values[0].sum() > values[-1].sum():
+        return (0.90, 0.88)
+    else:
+        return (0.90, 0.19)
