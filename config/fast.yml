@@ -1,0 +1,18 @@
+dataset:
+  source: cifar_fs
+scheduler:
+  train:
+    multistep:
+      milestones: [15, 20, 25]
+trainer:
+  epochs: 30
+  support_training:
+    max_epochs: 200
+optimizer:
+  train:
+    learning_rate: 0.05
+evaluation:
+  num_iterations: 10
+task:
+  train: ["rotation"]
+  weights: [1.0]

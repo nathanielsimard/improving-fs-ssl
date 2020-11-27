@@ -60,7 +60,7 @@ class ExperimentResult(object):
         self._records_dir_eval = os.path.join(self.output_dir, "evaluation")
 
     def best_epoch(self) -> int:
-        losses = self.metric("train", EpochResult.losses)
+        losses = self.metric("eval", EpochResult.losses)
 
         indexes = np.argsort(np.asarray(losses))
         index = indexes[0]
