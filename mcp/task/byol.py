@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import Optional
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 
 from mcp.model.base import freeze_weights
@@ -24,7 +25,6 @@ class BYOLTask(Task):
         super().__init__()
         self.compute = compute
         self.tau = tau
-        self.loss = nn.MSELoss()
         head_projection = BatchNormHead(embedding_size, head_size, head_size)
         head_prediction = BatchNormHead(head_size, head_size, head_size)
 
@@ -49,18 +49,28 @@ class BYOLTask(Task):
     ) -> TaskOutput:
         self._update_momentum_model(encoder, self.trainable.head_projection)
 
-        x_original = x
+        # TO-DO: change transforms for BYOL
+        x1, x2 = self.compute.cache_transform(x, self._training), self.compute.transform(x, self._training)
 
-        x = self.compute.cache_transform(x_original, self._training)
-        x = self.compute.cache_forward(x, encoder)
-        x = self.trainable.head_projection(x)
-        x = self.trainable.head_prediction(x)
+        x_one = self.compute.cache_forward(x1, encoder)
+        x_two = self.compute.cache_forward(x2, encoder)
+        online_proj_one = self.trainable.head_projection(x_one)
+        online_proj_two = self.trainable.head_projection(x_two)
 
-        x_prime = self.compute.transform(x_original, self._training)
-        x_prime = self._momentum_encoder(x_prime)  # type: ignore
-        x_prime = self._momentum_head_projection(x_prime)  # type: ignore
 
-        loss = self._loss(x, x_prime)
+        online_pred_one = self.trainable.head_prediction(online_proj_one)
+        online_pred_two = self.trainable.head_prediction(online_proj_two)
+
+        with torch.no_grad():
+            x_one = self._momentum_encoder(x1)  # type: ignore
+            x_two = self._momentum_encoder(x2)  # type: ignore
+            target_proj_one = self._momentum_head_projection(x_one)  # type: ignore
+            target_proj_two = self._momentum_head_projection(x_two)  # type: ignore
+
+        loss_one = self.loss(online_pred_one, target_proj_two.detach())
+        loss_two = self.loss(online_pred_two, target_proj_one.detach())
+
+        loss = (loss_one + loss_two).mean()
         metric = loss.cpu().detach().item()
 
         return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm")
@@ -79,15 +89,16 @@ class BYOLTask(Task):
             )
 
         if self._training:
-            _update_momentum_module(encoder, self._momentum_encoder, self.tau)
-            _update_momentum_module(
-                head_projection, self._momentum_head_projection, self.tau
-            )
+            with torch.no_grad():
+                _update_momentum_module(encoder, self._momentum_encoder, self.tau)
+                _update_momentum_module(
+                    head_projection, self._momentum_head_projection, self.tau
+                )
 
-    def _loss(self, x: torch.Tensor, x_prime: torch.Tensor) -> torch.Tensor:
-        x = x / torch.norm(x, dim=-1, keepdim=True)
-        x_prime = x_prime / torch.norm(x_prime, dim=-1, keepdim=True)
-        return self.loss(x, x_prime)
+    def loss(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        x = F.normalize(x, dim=-1, p=2)
+        y = F.normalize(y, dim=-1, p=2)
+        return 2 - 2 * (x * y).sum(dim=-1)
 
     def state_dict(self):
         value = {}
@@ -113,16 +124,8 @@ def _state_dict_or_none(module: Optional[nn.Module]):
 
 
 def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: float):
-    state_module = module.state_dict()
-    state_momentum = module_momentum.state_dict()
-    state_momentum_updated = {}
-
-    for key in state_module.keys():
-        state_momentum_updated[key] = state_momentum[key] * tau + state_module[key] * (
-            1 - tau
-        )
-
-    module_momentum.load_state_dict(state_momentum_updated)
+    for param_q, param_k in zip(module.parameters(), module_momentum.parameters()):
+            param_k.data = param_k.data * tau + param_q.data * (1.0 - tau)
 
 
 def _initialize_momentum_module(module: nn.Module) -> nn.Module:
