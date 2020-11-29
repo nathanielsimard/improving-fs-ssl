@@ -65,7 +65,8 @@ class BYOLTask(Task):
     ) -> TaskOutput:
         self._update_momentum_model(encoder, self.trainable.head_projection)
 
-        x1, x2 = self.transform(x), self.transform(x)
+        x1 = self.transform(x)
+        x2 = self.transform(x)
 
         x_one = encoder(x1)
         x_two = encoder(x2)
@@ -79,6 +80,7 @@ class BYOLTask(Task):
         with torch.no_grad():
             x_one = self._momentum_encoder(x1)  # type: ignore
             x_two = self._momentum_encoder(x2)  # type: ignore
+
             target_proj_one = self._momentum_head_projection(x_one)  # type: ignore
             target_proj_two = self._momentum_head_projection(x_two)  # type: ignore
 
