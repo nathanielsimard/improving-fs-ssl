@@ -113,7 +113,10 @@ class Trainer(object):
 
     def _evaluation_phase(self, epoch, dataloader_valid) -> float:
         return self.training_loop.evaluate(
-            self.model, self.tasks_valid, dataloader_valid.query, self.logger.evaluation.epoch(epoch, self.epochs),
+            self.model,
+            self.tasks_valid,
+            dataloader_valid.query,
+            self.logger.evaluation.epoch(epoch, self.epochs),
         )
 
     def _save_checkpoint(self, epoch: int, metric: float):
