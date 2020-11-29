@@ -160,7 +160,7 @@ class Trainer(object):
                 "optimizer_state_dict": self.optimizer_train.state_dict(),
                 "scheduler_state_dict": self.scheduler_train.state_dict(),
                 "checkpoints": self.checkpoints,
-                "valid_losses": self.valid_metrics,
+                "valid_metrics": self.valid_metrics,
             },
             self._trainer_path(epoch),
         )
@@ -177,7 +177,7 @@ class Trainer(object):
         self.scheduler_train.load_state_dict(trainer_checkpoint["scheduler_state_dict"])
 
         self.checkpoints = trainer_checkpoint["checkpoints"]
-        self.valid_metrics = trainer_checkpoint["valid_losses"]
+        self.valid_metrics = trainer_checkpoint["valid_metrics"]
 
     def _model_path(self, epoch: int) -> str:
         return os.path.join(self.save_path, f"model-{epoch}.pth")
