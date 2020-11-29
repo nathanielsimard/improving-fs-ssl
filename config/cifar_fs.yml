@@ -1,5 +1,7 @@
 dataset:
   source: cifar_fs
+dataloader:
+  batch_size: 128
 scheduler:
   train:
     multistep:
