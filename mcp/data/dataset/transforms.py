@@ -1,3 +1,4 @@
+import random
 from typing import Callable, Tuple, Union
 
 import torch
@@ -7,8 +8,10 @@ from kornia.augmentation import (
     Normalize,
     RandomAffine,
     RandomCrop,
+    RandomGrayscale,
     RandomHorizontalFlip,
 )
+from kornia.filters import GaussianBlur2d
 from PIL import Image
 
 # Transforms can be a composition, a callable function or object
@@ -23,6 +26,17 @@ class DefaultTransform(object):
 
     def __call__(self, image: Image) -> torch.Tensor:
         return self.transform(image)
+
+
+class RandomApply(object):
+    def __init__(self, fn, p):
+        self.fn = fn
+        self.p = p
+
+    def __call__(self, x):
+        if random.random() > self.p:
+            return x
+        return self.fn(x)
 
 
 class KorniaTransforms(object):
@@ -47,8 +61,16 @@ class KorniaTransforms(object):
     def random_flip(self, p: float = 0.5) -> RandomHorizontalFlip:
         return RandomHorizontalFlip(p=p)
 
-    def color_jitter(self) -> ColorJitter:
-        return ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4)
+    def color_jitter(self, hue: float = 0.0, p: float = 1.0) -> RandomApply:
+        return RandomApply(
+            ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=hue), p
+        )
 
-    def rotate(self, degree: float, p: float = 1.0):
-        return RandomAffine(degrees=(degree, degree))
+    def rotate(self, degree: float, p: float = 1.0) -> RandomApply:
+        return RandomApply(RandomAffine(degrees=(degree, degree)), p)
+
+    def grayscale(self, p: float = 1.0) -> RandomGrayscale:
+        return RandomGrayscale(p=p)
+
+    def gaussian_blur(self, p: float = 1.0) -> RandomApply:
+        return RandomApply(GaussianBlur2d((3, 3), (1.5, 1.5)), p)

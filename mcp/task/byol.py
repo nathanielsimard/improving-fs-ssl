@@ -2,12 +2,13 @@ from copy import deepcopy
 from typing import Optional
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 
+from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.model.base import freeze_weights
 from mcp.model.utils import BatchNormHead
 from mcp.task.base import Task, TaskOutput
-from mcp.task.compute import TaskCompute
 
 
 class TrainableModule(nn.Module):
@@ -19,12 +20,14 @@ class TrainableModule(nn.Module):
 
 class BYOLTask(Task):
     def __init__(
-        self, embedding_size: int, compute: TaskCompute, head_size: int, tau: float,
+        self,
+        embedding_size: int,
+        transforms: KorniaTransforms,
+        head_size: int,
+        tau: float,
     ):
         super().__init__()
-        self.compute = compute
         self.tau = tau
-        self.loss = nn.MSELoss()
         head_projection = BatchNormHead(embedding_size, head_size, head_size)
         head_prediction = BatchNormHead(head_size, head_size, head_size)
 
@@ -35,6 +38,14 @@ class BYOLTask(Task):
         self._initial_state_dict = self.state_dict()
 
         self._training = True
+        self.transforms = [
+            transforms.color_jitter(hue=0.2, p=0.8),
+            transforms.grayscale(p=0.2),
+            transforms.random_flip(),
+            transforms.gaussian_blur(p=0.1),
+            transforms.random_crop(),
+            transforms.normalize(),
+        ]
 
     @property
     def name(self):
@@ -44,23 +55,39 @@ class BYOLTask(Task):
     def initial_state_dict(self):
         return self._initial_state_dict
 
+    def transform(self, x: torch.Tensor) -> torch.Tensor:
+        for t in self.transforms:
+            x = t(x)
+        return x
+
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
         self._update_momentum_model(encoder, self.trainable.head_projection)
 
-        x_original = x
+        x1 = self.transform(x)
+        x2 = self.transform(x)
 
-        x = self.compute.cache_transform(x_original, self._training)
-        x = self.compute.cache_forward(x, encoder)
-        x = self.trainable.head_projection(x)
-        x = self.trainable.head_prediction(x)
+        x_one = encoder(x1)
+        x_two = encoder(x2)
 
-        x_prime = self.compute.transform(x_original, self._training)
-        x_prime = self._momentum_encoder(x_prime)  # type: ignore
-        x_prime = self._momentum_head_projection(x_prime)  # type: ignore
+        online_proj_one = self.trainable.head_projection(x_one)
+        online_proj_two = self.trainable.head_projection(x_two)
 
-        loss = self._loss(x, x_prime)
+        online_pred_one = self.trainable.head_prediction(online_proj_one)
+        online_pred_two = self.trainable.head_prediction(online_proj_two)
+
+        with torch.no_grad():
+            x_one = self._momentum_encoder(x1)  # type: ignore
+            x_two = self._momentum_encoder(x2)  # type: ignore
+
+            target_proj_one = self._momentum_head_projection(x_one)  # type: ignore
+            target_proj_two = self._momentum_head_projection(x_two)  # type: ignore
+
+        loss_one = self.loss(online_pred_one, target_proj_two.detach())
+        loss_two = self.loss(online_pred_two, target_proj_one.detach())
+
+        loss = (loss_one + loss_two).mean()
         metric = loss.cpu().detach().item()
 
         return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm")
@@ -79,15 +106,16 @@ class BYOLTask(Task):
             )
 
         if self._training:
-            _update_momentum_module(encoder, self._momentum_encoder, self.tau)
-            _update_momentum_module(
-                head_projection, self._momentum_head_projection, self.tau
-            )
+            with torch.no_grad():
+                _update_momentum_module(encoder, self._momentum_encoder, self.tau)
+                _update_momentum_module(
+                    head_projection, self._momentum_head_projection, self.tau
+                )
 
-    def _loss(self, x: torch.Tensor, x_prime: torch.Tensor) -> torch.Tensor:
-        x = x / torch.norm(x, dim=-1, keepdim=True)
-        x_prime = x_prime / torch.norm(x_prime, dim=-1, keepdim=True)
-        return self.loss(x, x_prime)
+    def loss(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        x = F.normalize(x, dim=-1, p=2)
+        y = F.normalize(y, dim=-1, p=2)
+        return 2 - 2 * (x * y).sum(dim=-1)
 
     def state_dict(self):
         value = {}
@@ -113,16 +141,8 @@ def _state_dict_or_none(module: Optional[nn.Module]):
 
 
 def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: float):
-    state_module = module.state_dict()
-    state_momentum = module_momentum.state_dict()
-    state_momentum_updated = {}
-
-    for key in state_module.keys():
-        state_momentum_updated[key] = state_momentum[key] * tau + state_module[key] * (
-            1 - tau
-        )
-
-    module_momentum.load_state_dict(state_momentum_updated)
+    for param_q, param_k in zip(module.parameters(), module_momentum.parameters()):
+        param_k.data = param_k.data * tau + param_q.data * (1.0 - tau)
 
 
 def _initialize_momentum_module(module: nn.Module) -> nn.Module:
