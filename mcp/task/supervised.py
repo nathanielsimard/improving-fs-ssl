@@ -1,3 +1,4 @@
+from time import time as time
 from typing import Optional
 
 import torch
@@ -42,7 +43,7 @@ class SupervisedTask(Task):
         metric = self.metric(x, y)
         loss = self.loss(x, y)
 
-        return TaskOutput(loss=loss, metric=metric, metric_name="acc")
+        return TaskOutput(loss=loss, metric=metric, metric_name="acc", time=time())
 
     def train(self, mode: bool = True):
         self._training = mode

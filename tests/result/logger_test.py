@@ -11,14 +11,14 @@ from mcp.result.logger import (
 OUTPUT = "/tmp/result_record_test"
 
 
-RECORD = ResultRecord("task_name", 1.5, 55.2, "metric_name")
-OTHER_RECORD = ResultRecord("task_name", 0.2, 85.2, "metric_name")
+RECORD = ResultRecord("task_name", 1.5, 55.2, "metric_name", 1)
+OTHER_RECORD = ResultRecord("task_name", 0.2, 85.2, "metric_name", 1)
 
-RECORD_TASK1 = ResultRecord("task_1", 1.5, 55.2, "metric_name")
-OTHER_RECORD_TASK1 = ResultRecord("task_1", 0.2, 85.2, "metric_name")
+RECORD_TASK1 = ResultRecord("task_1", 1.5, 55.2, "metric_name", 1)
+OTHER_RECORD_TASK1 = ResultRecord("task_1", 0.2, 85.2, "metric_name", 1)
 
-RECORD_TASK2 = ResultRecord("task_2", 1.56, 65.2, "metric_name")
-OTHER_RECORD_TASK2 = ResultRecord("task_2", 0.299, 85.200, "metric_name")
+RECORD_TASK2 = ResultRecord("task_2", 1.56, 65.2, "metric_name", 1)
+OTHER_RECORD_TASK2 = ResultRecord("task_2", 0.299, 85.200, "metric_name", 1)
 
 
 class ResultRecordsTest(unittest.TestCase):

@@ -15,6 +15,7 @@ class ResultRecord:
     loss: float
     metric: float
     metric_name: str
+    time: float
 
     def serialize(self) -> str:
         return json.dumps(
@@ -23,6 +24,7 @@ class ResultRecord:
                 "loss": str(self.loss),
                 "metric": str(self.metric),
                 "metric_name": self.metric_name,
+                "time": self.time,
             }
         )
 
@@ -44,6 +46,7 @@ def load_records(line: str) -> List[ResultRecord]:
             loss=float(obj["loss"]),
             metric=float(obj["metric"]),
             metric_name=obj["metric_name"],
+            time=obj["time"],
         )
         for obj in objs
     ]
@@ -95,6 +98,7 @@ class ResultLogger(object):
                 loss=output.loss.item(),
                 metric=output.metric,
                 metric_name=output.metric_name,
+                time=output.time,
             )
             for name, output in zip(task_names, outputs)
         ]

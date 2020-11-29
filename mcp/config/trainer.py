@@ -11,12 +11,17 @@ class SupportTrainingConfig(NamedTuple):
 class TrainerConfig(NamedTuple):
     epochs: int
     support_training: SupportTrainingConfig
+    num_valid_iterations: int
+    num_checkpoints: int
 
 
 def parse(config: ConfigType) -> TrainerConfig:
     config = config["trainer"]
     return TrainerConfig(
-        epochs=config["epochs"], support_training=_parse_support_training(config),
+        epochs=config["epochs"],
+        support_training=_parse_support_training(config),
+        num_valid_iterations=config["num_valid_iterations"],
+        num_checkpoints=config["num_checkpoints"],
     )
 
 

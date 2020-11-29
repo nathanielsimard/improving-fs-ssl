@@ -1,5 +1,6 @@
 import random
 from collections import defaultdict
+from time import time
 from typing import Dict, List, Optional, Tuple
 
 import torch
@@ -74,7 +75,7 @@ class RotationTask(Task):
         metric = self.metric(x, y)
         loss = self.loss(x, y)
 
-        return TaskOutput(loss=loss, metric=metric, metric_name="acc")
+        return TaskOutput(loss=loss, metric=metric, metric_name="acc", time=time())
 
     def _plot_and_exit(self, x):
         import torchvision.utils as tvu

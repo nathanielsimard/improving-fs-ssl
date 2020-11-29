@@ -169,6 +169,7 @@ class TrainerModule(Module):
             self.config.trainer.support_training.min_loss,
             self.config.trainer.support_training.max_epochs,
             compute,
+            self.config.evaluation.metric,
         )
 
     @provider
@@ -198,6 +199,8 @@ class TrainerModule(Module):
         scheduler_train: SchedulerTrain,
         scheduler_support: SchedulerValid,
         dataloader_splits: FewShotDataLoaderSplits,
+        dataloader_valid_factory: ValidFewShotDataLoaderFactory,
+        dataset_splits: FewShotDatasetSplits,
         trainer_loggers: TrainerLoggers,
         training_loop: TrainingLoop,
         tasks_train: TasksTrain,
@@ -210,7 +213,8 @@ class TrainerModule(Module):
             scheduler_train,
             scheduler_support,
             dataloader_splits.train,
-            dataloader_splits.valid,
+            dataset_splits.valid,
+            dataloader_valid_factory,
             tasks_train,
             tasks_valid,
             self.config.trainer.epochs,
@@ -218,6 +222,9 @@ class TrainerModule(Module):
             trainer_loggers,
             self.device,
             checkpoint_dir(self.output_dir),
+            self.config.evaluation.metric,
+            self.config.trainer.num_valid_iterations,
+            self.config.trainer.num_checkpoints,
         )
 
 
