@@ -5,10 +5,10 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.model.base import freeze_weights
 from mcp.model.utils import BatchNormHead
 from mcp.task.base import Task, TaskOutput
-from mcp.task.compute import TaskCompute
 
 
 class TrainableModule(nn.Module):
@@ -20,10 +20,13 @@ class TrainableModule(nn.Module):
 
 class BYOLTask(Task):
     def __init__(
-        self, embedding_size: int, compute: TaskCompute, head_size: int, tau: float,
+        self,
+        embedding_size: int,
+        transforms: KorniaTransforms,
+        head_size: int,
+        tau: float,
     ):
         super().__init__()
-        self.compute = compute
         self.tau = tau
         head_projection = BatchNormHead(embedding_size, head_size, head_size)
         head_prediction = BatchNormHead(head_size, head_size, head_size)
@@ -35,6 +38,14 @@ class BYOLTask(Task):
         self._initial_state_dict = self.state_dict()
 
         self._training = True
+        self.transforms = [
+            transforms.color_jitter(hue=0.2, p=0.8),
+            transforms.grayscale(p=0.2),
+            transforms.random_flip(),
+            transforms.gaussian_blur(p=0.1),
+            transforms.random_crop(),
+            transforms.normalize(),
+        ]
 
     @property
     def name(self):
@@ -44,19 +55,23 @@ class BYOLTask(Task):
     def initial_state_dict(self):
         return self._initial_state_dict
 
+    def transform(self, x: torch.Tensor) -> torch.Tensor:
+        for t in self.transforms:
+            x = t(x)
+        return x
+
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
         self._update_momentum_model(encoder, self.trainable.head_projection)
 
-        # TO-DO: change transforms for BYOL
-        x1, x2 = self.compute.cache_transform(x, self._training), self.compute.transform(x, self._training)
+        x1, x2 = self.transform(x), self.transform(x)
 
-        x_one = self.compute.cache_forward(x1, encoder)
-        x_two = self.compute.cache_forward(x2, encoder)
+        x_one = encoder(x1)
+        x_two = encoder(x2)
+
         online_proj_one = self.trainable.head_projection(x_one)
         online_proj_two = self.trainable.head_projection(x_two)
-
 
         online_pred_one = self.trainable.head_prediction(online_proj_one)
         online_pred_two = self.trainable.head_prediction(online_proj_two)
@@ -125,7 +140,7 @@ def _state_dict_or_none(module: Optional[nn.Module]):
 
 def _update_momentum_module(module: nn.Module, module_momentum: nn.Module, tau: float):
     for param_q, param_k in zip(module.parameters(), module_momentum.parameters()):
-            param_k.data = param_k.data * tau + param_q.data * (1.0 - tau)
+        param_k.data = param_k.data * tau + param_q.data * (1.0 - tau)
 
 
 def _initialize_momentum_module(module: nn.Module) -> nn.Module:

@@ -55,10 +55,10 @@ class TaskModule(Module):
 
     @provider
     @inject
-    def provide_byol_task(self, compute: TaskCompute) -> BYOLTask:
+    def provide_byol_task(self, transforms: KorniaTransforms) -> BYOLTask:
         return BYOLTask(
             self.config.model.embedding_size,
-            compute,
+            transforms,
             self.config.task.byol.head_size,
             self.config.task.byol.tau,
         )
