@@ -79,17 +79,16 @@ class Trainer(object):
 
         for epoch in range(starting_epoch + 1, self.epochs + 1):
             self._training_phase(epoch)
-            logger_valid = self.logger.train.epoch(epoch, self.epochs)
 
             metric = 0.0
             for i in range(self.num_valid_iterations):
                 dataloader_valid = self.dataloader_valid_factory.create(
                     self.dataset_valid
                 )
-                self._training_support_phase(logger_valid, dataloader_valid)
-                metric += self._evaluation_phase(logger_valid, dataloader_valid)
+                self._training_support_phase(epoch, dataloader_valid)
+                metric += self._evaluation_phase(epoch, dataloader_valid)
 
-            self._save_checkpoint(epoch, metric / self.num_valid_iterations)
+            self._save_checkpoint(epoch, metric / self.num_valid_iterations, metric_name)
 
     def _training_phase(self, epoch):
         self.training_loop.fit_one(
@@ -102,24 +101,24 @@ class Trainer(object):
             train_model=True,
         )
 
-    def _training_support_phase(self, logger_valid, dataloader_valid):
+    def _training_support_phase(self, epoch, dataloader_valid):
         self.training_loop.fit_support(
             self.model,
             self.tasks_valid,
             dataloader_valid.support,
             self.optimizer_support,
             self.scheduler_support,
-            logger_valid,
+            self.logger.support.epoch(epoch, self.epochs),
         )
 
-    def _evaluation_phase(self, logger_valid, dataloader_valid) -> float:
+    def _evaluation_phase(self, epoch, dataloader_valid) -> float:
         return self.training_loop.evaluate(
-            self.model, self.tasks_valid, dataloader_valid.query, logger_valid,
+            self.model, self.tasks_valid, dataloader_valid.query, self.logger.evaluation.epoch(epoch, self.epochs),
         )
 
-    def _save_checkpoint(self, epoch: int, loss: float):
-        logger.info(f"Saving checkpoint | epoch {epoch} - loss {loss}")
-        self.valid_metrics.append(loss)
+    def _save_checkpoint(self, epoch: int, metric: float):
+        logger.info(f"Saving checkpoint | epoch {epoch} - metric {metric}")
+        self.valid_metrics.append(metric)
         self.checkpoints.append(epoch)
         self.save(epoch)
 
@@ -137,9 +136,9 @@ class Trainer(object):
 
             idx = idxs[worse_metric_id]
             epoch = self.checkpoints[idx]
-            loss = self.valid_metrics[idx]
+            metric = self.valid_metrics[idx]
 
-            logger.info(f"Remove checkpoint | epoch {epoch} - loss {loss}")
+            logger.info(f"Remove checkpoint | epoch {epoch} - metric {metric}")
 
             os.remove(self._trainer_path(epoch))
             os.remove(self._model_path(epoch))
