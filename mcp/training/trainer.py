@@ -88,7 +88,7 @@ class Trainer(object):
                 self._training_support_phase(epoch, dataloader_valid)
                 metric += self._evaluation_phase(epoch, dataloader_valid)
 
-            self._save_checkpoint(epoch, metric / self.num_valid_iterations, metric_name)
+            self._save_checkpoint(epoch, metric / self.num_valid_iterations)
 
     def _training_phase(self, epoch):
         self.training_loop.fit_one(
