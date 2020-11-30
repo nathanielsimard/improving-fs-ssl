@@ -1,4 +1,5 @@
 from copy import deepcopy
+from time import time as time
 from typing import Optional
 
 import torch
@@ -90,7 +91,7 @@ class BYOLTask(Task):
         loss = (loss_one + loss_two).mean()
         metric = loss.cpu().detach().item()
 
-        return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm")
+        return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm", time=time())
 
     def train(self, mode: bool = True):
         self._training = mode

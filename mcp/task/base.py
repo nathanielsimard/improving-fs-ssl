@@ -1,4 +1,5 @@
 import abc
+from time import time as time_since_epoch
 from typing import NamedTuple, Optional
 
 import torch
@@ -11,6 +12,7 @@ class TaskOutput(NamedTuple):
     loss: torch.Tensor
     metric: float
     metric_name: str
+    time: float
 
 
 class Task(Model):
@@ -55,6 +57,7 @@ class WeightedTask(Task):
             loss=self.weight * output.loss,
             metric=output.metric,
             metric_name=output.metric_name,
+            time=time_since_epoch(),
         )
 
     def state_dict(self):

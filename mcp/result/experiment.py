@@ -4,6 +4,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
+from mcp.config.evaluation import BestWeightsMetric
 from mcp.config.parser import ExperimentConfig
 from mcp.result.logger import ResultRecord, load_records_from_file
 from mcp.utils.logging import create_logger
@@ -21,6 +22,10 @@ class EpochResult(object):
     @staticmethod
     def losses(records: List[List[ResultRecord]]) -> List[List[float]]:
         return [[r.loss for r in rec] for rec in records]
+
+    @staticmethod
+    def times(records: List[List[ResultRecord]]) -> List[List[float]]:
+        return [[r.time for r in rec] for rec in records]
 
     @staticmethod
     def metric(records: List[List[ResultRecord]]) -> List[List[float]]:
@@ -60,14 +65,16 @@ class ExperimentResult(object):
         self._records_dir_eval = os.path.join(self.output_dir, "evaluation")
 
     def best_epoch(self) -> int:
-        losses = self.metric("eval", EpochResult.losses)
+        metric, best_idx, name = self._best_weights_metric()
+        metrics = self.metric("eval", metric)
 
-        indexes = np.argsort(np.asarray(losses))
-        index = indexes[0]
+        indexes = np.argsort(metrics)
+        index = indexes[best_idx]
+
+        best_metric = metrics[index]
         epoch = index + 1
-        valid_loss = losses[index]
 
-        logger.info(f"Found the best epoch to be {epoch} with valid loss {valid_loss}")
+        logger.info(f"Found the best epoch to be {epoch} with {best_metric} {name}")
         return epoch
 
     def records(self, tag: str, train: bool = True) -> List[EpochResult]:
@@ -105,3 +112,22 @@ class ExperimentResult(object):
                 for records in e_records
             ]
         )
+
+    def _best_weights_metric(self):
+        if self.config.evaluation.metric == BestWeightsMetric.LOSS:
+            metric = EpochResult.losses
+            best_idx = 0  # Best loss is the smallest one.
+            name = "valid loss"
+        elif self.config.evaluation.metric == BestWeightsMetric.TIME:
+            metric = EpochResult.times
+            best_idx = -1  # Best time is the bigger one.
+            name = "time"
+        elif self.config.evaluation.metric == BestWeightsMetric.METRIC:
+            metric = EpochResult.metric
+            best_idx = -1  # We assume the bigger the metric is, the better.
+            name = str(self.metric_names("eval"))
+        else:
+            raise ValueError(
+                f"Evaluation Metric not yet supported: {self.config.evaluation.metric}"
+            )
+        return metric, best_idx, name

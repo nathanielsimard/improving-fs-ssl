@@ -54,6 +54,8 @@ DEFAULT_CONFIG: ConfigType = {
     "trainer": {
         "epochs": 90,
         "support_training": {"max_epochs": 300, "min_loss": 0.01},
+        "num_valid_iterations": 5,
+        "num_checkpoints": 10,
     },
     "task": {
         "train": ["rotation", "byol"],
@@ -62,7 +64,7 @@ DEFAULT_CONFIG: ConfigType = {
         "weights": [1, 250],
     },
     "model": {"embedding_size": 256},
-    "evaluation": {"num_iterations": 25},
+    "evaluation": {"num_iterations": 25, "metric": "metric"},
 }
 
 

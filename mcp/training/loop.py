@@ -5,6 +5,7 @@ import torch
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
+from mcp.config.evaluation import BestWeightsMetric
 from mcp.data.dataloader.dataloader import DataLoader
 from mcp.model.base import Model
 from mcp.result.logger import ResultLogger
@@ -22,11 +23,13 @@ class TrainingLoop(object):
         support_min_loss: float,
         support_max_epochs: int,
         compute: TaskCompute,
+        checkpoint_metric: BestWeightsMetric,
     ):
         self.device = device
         self.support_min_loss = support_min_loss
         self.support_max_epochs = support_max_epochs
         self.compute = compute
+        self.checkpoint_metric = checkpoint_metric
 
     def fit_one(
         self,
@@ -114,16 +117,26 @@ class TrainingLoop(object):
         for task in tasks:
             task.eval()
 
-        running_loss = 0.0
+        running_metric = 0.0
         total = 0
+
         for i, (x, y) in enumerate(dataloader):
             outputs = self._compute(model, tasks, x, y)
             training_logger.log(outputs, task_names, i + 1, len(dataloader))
-            running_loss += sum(o.loss.item() for o in outputs)
+
+            if self.checkpoint_metric == BestWeightsMetric.LOSS:
+                running_metric += sum(o.loss.item() for o in outputs)
+            elif self.checkpoint_metric == BestWeightsMetric.METRIC:
+                running_metric += sum(o.metric for o in outputs)
+            elif self.checkpoint_metric == BestWeightsMetric.TIME:
+                running_metric += sum(o.time for o in outputs)
+            else:
+                raise ValueError(f"Unsupported metric {self.checkpoint_metric}")
+
             total += len(tasks)
 
         model.defreeze_weights()
-        return running_loss / total
+        return running_metric / total
 
     def _step(
         self,
