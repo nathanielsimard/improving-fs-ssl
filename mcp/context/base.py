@@ -206,6 +206,10 @@ class TrainerModule(Module):
         tasks_train: TasksTrain,
         tasks_valid: TasksValid,
     ) -> Trainer:
+        dataloader_valids = [
+            dataloader_valid_factory.create(dataset_splits.valid)
+            for _ in range(self.config.trainer.num_valid_iterations)
+        ]
         return Trainer(
             model,
             optimizer_train,
@@ -213,8 +217,7 @@ class TrainerModule(Module):
             scheduler_train,
             scheduler_support,
             dataloader_splits.train,
-            dataset_splits.valid,
-            dataloader_valid_factory,
+            dataloader_valids,
             tasks_train,
             tasks_valid,
             self.config.trainer.epochs,
@@ -223,7 +226,6 @@ class TrainerModule(Module):
             self.device,
             checkpoint_dir(self.output_dir),
             self.config.evaluation.metric,
-            self.config.trainer.num_valid_iterations,
             self.config.trainer.num_checkpoints,
         )
 

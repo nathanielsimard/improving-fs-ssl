@@ -36,6 +36,7 @@ _SUPPORT_SCHEDULER_CONFIG = deepcopy(_DEFAULT_SCHEDULER_CONFIG)
 _SUPPORT_SCHEDULER_CONFIG["type"] = "constant"
 
 DEFAULT_CONFIG: ConfigType = {
+    "seed": 42,
     "dataset": {
         "num_samples": 5,
         "n_way": 5,
@@ -69,6 +70,7 @@ DEFAULT_CONFIG: ConfigType = {
 
 
 class ExperimentConfig(NamedTuple):
+    seed: int
     dataset: DatasetConfig
     dataloader: DataLoaderConfig
     optimizer: OptimizerConfig
@@ -94,6 +96,7 @@ def parse(
         config = merge(c, config)
 
     return ExperimentConfig(
+        seed=config["seed"],
         dataset=parse_dataset(config),
         dataloader=parse_dataloader(config),
         optimizer=parse_optimizer(config),

@@ -1,5 +1,7 @@
+import random
 from typing import Optional
 
+import numpy as np
 import torch
 
 from mcp.config.parser import ExperimentConfig
@@ -16,6 +18,7 @@ def run_train(
     device_str: str,
     checkpoint: Optional[int] = None,
 ):
+    set_seed(config.seed)
     device = torch.device(device_str)
     injector = create_injector(config, output_dir, device)
 
@@ -28,6 +31,7 @@ def run_train(
 
 
 def run_eval(config: ExperimentConfig, result_dir: str, device_str: str):
+    set_seed(config.seed)
     device = torch.device(device_str)
     injector = create_injector(config, result_dir, device)
 
@@ -37,8 +41,15 @@ def run_eval(config: ExperimentConfig, result_dir: str, device_str: str):
 
 
 def run_viz(config: ExperimentConfig, result_dir: str, device_str: str):
+    set_seed(config.seed)
     device = torch.device(device_str)
     injector = create_injector(config, result_dir, device)
 
     viz = injector.get(Vizualization)
     viz.plot()
+
+
+def set_seed(seed: int):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)

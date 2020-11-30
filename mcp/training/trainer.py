@@ -7,8 +7,7 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
 from mcp.config.evaluation import BestWeightsMetric
-from mcp.data.dataloader.dataloader import DataLoader, FewShotDataLoaderFactory
-from mcp.data.dataset.dataset import FewShotDataset
+from mcp.data.dataloader.dataloader import DataLoader, FewShotDataLoader
 from mcp.model.base import Model
 from mcp.result.logger import ResultLogger
 from mcp.task.base import Task
@@ -33,8 +32,7 @@ class Trainer(object):
         scheduler_train: _LRScheduler,
         scheduler_support: _LRScheduler,
         dataloader_train: DataLoader,
-        dataset_valid: FewShotDataset,
-        dataloader_valid_factory: FewShotDataLoaderFactory,
+        dataloader_valids: List[FewShotDataLoader],
         tasks_train: List[Task],
         tasks_valid: List[Task],
         epochs: int,
@@ -43,7 +41,6 @@ class Trainer(object):
         device: torch.device,
         save_path: str,
         checkpoint_metric: BestWeightsMetric,
-        num_valid_iterations: int,
         num_checkpoints: int,
     ):
         self.model = model
@@ -52,8 +49,7 @@ class Trainer(object):
         self.scheduler_train = scheduler_train
         self.scheduler_support = scheduler_support
         self.dataloader_train = dataloader_train
-        self.dataloader_valid_factory = dataloader_valid_factory
-        self.dataset_valid = dataset_valid
+        self.dataloader_valids = dataloader_valids
         self.tasks_train = tasks_train
         self.tasks_valid = tasks_valid
         self.epochs = epochs
@@ -62,7 +58,6 @@ class Trainer(object):
         self.device = device
         self.save_path = save_path
         self.checkpoint_metric = checkpoint_metric
-        self.num_valid_iterations = num_valid_iterations
         self.num_checkpoints = num_checkpoints
         self.valid_metrics: List[float] = []
         self.checkpoints: List[int] = []
@@ -81,14 +76,11 @@ class Trainer(object):
             self._training_phase(epoch)
 
             metric = 0.0
-            for i in range(self.num_valid_iterations):
-                dataloader_valid = self.dataloader_valid_factory.create(
-                    self.dataset_valid
-                )
+            for dataloader_valid in self.dataloader_valids:
                 self._training_support_phase(epoch, dataloader_valid)
                 metric += self._evaluation_phase(epoch, dataloader_valid)
 
-            self._save_checkpoint(epoch, metric / self.num_valid_iterations)
+            self._save_checkpoint(epoch, metric / len(self.dataloader_valids))
 
     def _training_phase(self, epoch):
         self.training_loop.fit_one(
