@@ -10,7 +10,9 @@ from kornia.augmentation import (
     RandomCrop,
     RandomGrayscale,
     RandomHorizontalFlip,
+    RandomResizedCrop,
 )
+from kornia.enhance.adjust import solarize as k_solarize
 from kornia.filters import GaussianBlur2d
 from PIL import Image
 
@@ -58,19 +60,25 @@ class KorniaTransforms(object):
     def random_crop(self) -> RandomCrop:
         return RandomCrop(self.random_crop_size, padding=self.random_crop_padding)
 
+    def random_resized_crop(self, p=1.0) -> RandomResizedCrop:
+        return RandomResizedCrop(self.random_crop_size, p=p)
+
     def random_flip(self, p: float = 0.5) -> RandomHorizontalFlip:
         return RandomHorizontalFlip(p=p)
 
-    def color_jitter(self, hue: float = 0.0, p: float = 1.0) -> RandomApply:
-        return RandomApply(
-            ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=hue), p
-        )
+    def color_jitter(self, hue: float = 0.0, p: float = 1.0) -> ColorJitter:
+        return ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=hue, p=p)
 
-    def rotate(self, degree: float, p: float = 1.0) -> RandomApply:
-        return RandomApply(RandomAffine(degrees=(degree, degree)), p)
+    def rotate(self, degree: float, p: float = 1.0) -> RandomAffine:
+        return RandomAffine(degrees=(degree, degree), p=p)
 
     def grayscale(self, p: float = 1.0) -> RandomGrayscale:
         return RandomGrayscale(p=p)
 
     def gaussian_blur(self, p: float = 1.0) -> RandomApply:
         return RandomApply(GaussianBlur2d((3, 3), (1.5, 1.5)), p)
+
+    def solarize(self, threshold: float, p: float = 1.0) -> RandomApply:
+        return RandomApply(
+            lambda x: k_solarize(x, thresholds=threshold, additions=None), p
+        )

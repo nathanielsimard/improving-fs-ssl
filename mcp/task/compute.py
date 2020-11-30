@@ -14,6 +14,7 @@ class TaskCompute(object):
             transforms.random_flip(),
             transforms.normalize(),
         ]
+
         self.transforms_eval = [transforms.normalize()]
         self._cache: Dict[str, torch.Tensor] = {}
 

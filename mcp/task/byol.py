@@ -44,7 +44,7 @@ class BYOLTask(Task):
             transforms.grayscale(p=0.2),
             transforms.random_flip(),
             transforms.gaussian_blur(p=0.1),
-            transforms.random_crop(),
+            transforms.random_resized_crop(),
             transforms.normalize(),
         ]
 
