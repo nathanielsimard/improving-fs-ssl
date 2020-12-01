@@ -86,7 +86,7 @@ class MiniImageNetDatasetLoader(DatasetLoader):
     def _extract(self, output_zip: str, output: str):
         os.makedirs(output, exist_ok=True)
 
-        with ZipFile("sampleDir.zip", "r") as zipObj:
+        with ZipFile(output_zip, "r") as zipObj:
             zipObj.extractall(output)
 
     def _load(self, download_dir) -> Tuple[_Dataset, List[_Dataset], _Dataset]:
