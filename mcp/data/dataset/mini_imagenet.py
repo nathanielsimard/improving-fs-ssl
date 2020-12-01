@@ -15,6 +15,10 @@ from mcp.data.dataset.dataset import (
     DatasetSplits,
 )
 
+from mcp.utils import logging
+
+logger = logging.create_logger(__name__)
+
 IMAGE_MEAN = (120.39586422 / 255.0, 115.59361427 / 255.0, 104.54012653 / 255.0)
 IMAGES_STD = (70.68188272 / 255.0, 68.27635443 / 255.0, 72.54505529 / 255.0)
 
@@ -74,9 +78,9 @@ class MiniImageNetDatasetLoader(DatasetLoader):
         url = "https://drive.google.com/file/d/1fJAK5WZTjerW7EWHHQAR9pRJVNg1T1Y7"
         output = os.path.join(output_dir, "miniImageNet")
         output_zip = output + ".zip"
-        print(output_zip)
 
         if not os.path.exists(output_zip):
+            logger.info("Downloading Mini Image Net...")
             gdown.download(url, output_zip, quiet=False)
 
         if not os.path.exists(output):
