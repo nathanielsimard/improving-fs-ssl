@@ -108,7 +108,7 @@ class MiniImageNetDatasetLoader(DatasetLoader):
             ),
         ]
         file_valid = os.path.join(
-            download_dir, "miniImageNet_category_split_valid.pickle"
+            download_dir, "miniImageNet_category_split_val.pickle"
         )
         file_test = os.path.join(
             download_dir, "miniImageNet_category_split_test.pickle"
