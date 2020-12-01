@@ -46,7 +46,7 @@ class MiniImageNetDataset(Dataset):
         # of the dataset is 0.
         label = label - self.first_class_index
 
-        return torch.tensor(image).transpose(0, -1), int(label)
+        return torch.tensor(image, dtype=torch.float32).transpose(0, -1), int(label)
 
     def __len__(self):
         return len(self.dataset.labels)
