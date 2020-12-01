@@ -117,9 +117,15 @@ class MiniImageNetDatasetLoader(DatasetLoader):
         )
 
     def _load_dataset(self, file: str) -> _Dataset:
-        with open(file, "rb") as f:
-            data = pickle.load(f)
-            return _Dataset(images=data["data"], labels=data["labels"])
+        try:
+            with open(file, "rb") as fo:
+                data = pickle.load(fo)
+        except Exception:
+            with open(file, "rb") as f:
+                u = pickle._Unpickler(f)  # type: ignore
+                u.encoding = "latin1"
+                data = u.load()
+        return _Dataset(images=data["data"], labels=data["labels"])
 
     def _convert(self, dataset: _Dataset, classes: List[int]) -> MiniImageNetDataset:
         return MiniImageNetDataset(dataset, classes[0])
