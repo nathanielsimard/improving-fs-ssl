@@ -61,16 +61,16 @@ class MiniImageNetDatasetLoader(DatasetLoader):
 
     def load(self, output_dir: str) -> DatasetSplits:
         download_dir = self._download(output_dir)
-        dataset_train, dataset_valids, dataset_test = self._load(download_dir)
+        dataset_trains, dataset_valid, dataset_test = self._load(download_dir)
 
         return DatasetSplits(
-            train=self._convert(dataset_train, CLASSES_TRAIN),
-            valid=ComposedDataset(
+            train=ComposedDataset(
                 [
-                    self._convert(dataset_valid, CLASSES_VALID)
-                    for dataset_valid in dataset_valids
+                    self._convert(dataset_train, CLASSES_TRAIN)
+                    for dataset_train in dataset_trains
                 ]
             ),
+            valid=self._convert(dataset_valid, CLASSES_VALID),
             test=self._convert(dataset_test, CLASSES_TEST),
         )
 
@@ -94,25 +94,28 @@ class MiniImageNetDatasetLoader(DatasetLoader):
         with ZipFile(output_zip, "r") as zipObj:
             zipObj.extractall(output)
 
-    def _load(self, download_dir) -> Tuple[_Dataset, List[_Dataset], _Dataset]:
-        file_train = os.path.join(
-            download_dir, "miniImageNet_category_split_train_phase_train.pickle"
-        )
-        file_valids = [
+    def _load(self, download_dir) -> Tuple[List[_Dataset], _Dataset, _Dataset]:
+        file_trains = [
             os.path.join(
-                download_dir, "miniImageNet_category_split_valid_phase_train.pickle"
+                download_dir, "miniImageNet_category_split_train_phase_train.pickle"
             ),
             os.path.join(
-                download_dir, "miniImageNet_category_split_valid_phase_val.pickle"
+                download_dir, "miniImageNet_category_split_train_phase_val.pickle"
+            ),
+            os.path.join(
+                download_dir, "miniImageNet_category_split_train_phase_test.pickle"
             ),
         ]
+        file_valid = os.path.join(
+            download_dir, "miniImageNet_category_split_valid_phase_val.pickle"
+        )
         file_test = os.path.join(
             download_dir, "miniImageNet_category_split_test.pickle"
         )
 
         return (
-            self._load_dataset(file_train),
-            [self._load_dataset(file_valid) for file_valid in file_valids],
+            [self._load_dataset(file_train) for file_train in file_trains],
+            self._load_dataset(file_valid),
             self._load_dataset(file_test),
         )
 
