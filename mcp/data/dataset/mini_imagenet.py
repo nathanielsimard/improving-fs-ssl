@@ -74,6 +74,7 @@ class MiniImageNetDatasetLoader(DatasetLoader):
         url = "https://drive.google.com/file/d/1fJAK5WZTjerW7EWHHQAR9pRJVNg1T1Y7"
         output = os.path.join(output_dir, "miniImageNet")
         output_zip = output + ".zip"
+        print(output_zip)
 
         if not os.path.exists(output_zip):
             gdown.download(url, output_zip, quiet=False)
