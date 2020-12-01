@@ -22,7 +22,7 @@ from mcp.data.dataloader.dataloader import (
     FewShotDataLoaderFactory,
     FewShotDataLoaderSplits,
 )
-from mcp.data.dataset import cifar
+from mcp.data.dataset import cifar, mini_imagenet
 from mcp.data.dataset.dataset import (
     DatasetLoader,
     DatasetMetadata,
@@ -155,6 +155,10 @@ class TrainerModule(Module):
     def provide_kornia_transformations(self) -> KorniaTransforms:
         if self.config.dataset.source == Source.CIFAR_FS:
             return KorniaTransforms(cifar.IMAGES_MEAN, cifar.IMAGES_STD, (32, 32), 4)
+        elif self.config.dataset.source == Source.MINI_IMAGE_NET:
+            return KorniaTransforms(
+                mini_imagenet.IMAGE_MEAN, mini_imagenet.IMAGES_STD, (84, 84), 8
+            )
         else:
             raise ValueError(
                 f"Dataset source not yet supported {self.config.dataset.source}"
@@ -273,6 +277,8 @@ class DataModule(Module):
             return cifar.CifarFsDatasetLoader(
                 self.config.dataset.cifar_fs.convert_labels
             )
+        elif self.config.dataset.source == Source.MINI_IMAGE_NET:
+            return mini_imagenet.MiniImageNetDatasetLoader()
         else:
             raise ValueError(
                 f"Dataset source not yet supported {self.config.dataset.source}"
