@@ -84,6 +84,7 @@ class MiniImageNetDatasetLoader(DatasetLoader):
             gdown.download(url, output_zip, quiet=False)
 
         if not os.path.exists(output):
+            logger.info("Extracting Mini Image Net...")
             self._extract(output_zip, output)
 
         return output
@@ -120,6 +121,7 @@ class MiniImageNetDatasetLoader(DatasetLoader):
         )
 
     def _load_dataset(self, file: str) -> _Dataset:
+        logger.info(f"Loading {file}...")
         try:
             with open(file, "rb") as fo:
                 data = pickle.load(fo)
