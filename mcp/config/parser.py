@@ -64,7 +64,7 @@ DEFAULT_CONFIG: ConfigType = {
         "byol": {"head_size": 128, "tau": 0.99},
         "weights": [1, 250],
     },
-    "model": {"embedding_size": 256},
+    "model": {"embedding_size": 512},
     "evaluation": {"num_iterations": 25, "metric": "metric"},
 }
 
