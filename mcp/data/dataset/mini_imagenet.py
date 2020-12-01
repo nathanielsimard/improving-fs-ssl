@@ -75,7 +75,7 @@ class MiniImageNetDatasetLoader(DatasetLoader):
         )
 
     def _download(self, output_dir: str) -> str:
-        url = "https://drive.google.com/file/d/1fJAK5WZTjerW7EWHHQAR9pRJVNg1T1Y7"
+        url = "https://drive.google.com/u/0/uc?export=download&confirm=juh4&id=1fJAK5WZTjerW7EWHHQAR9pRJVNg1T1Y7"
         output = os.path.join(output_dir, "miniImageNet")
         output_zip = output + ".zip"
 
