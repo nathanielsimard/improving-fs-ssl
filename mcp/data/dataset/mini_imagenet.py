@@ -44,7 +44,7 @@ class MiniImageNetDataset(Dataset):
 
         # To make sure the first class index
         # of the dataset is 0.
-        label = self.first_class_index
+        label = label - self.first_class_index
 
         return torch.tensor(image), int(label)
 
