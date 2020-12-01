@@ -12,6 +12,7 @@ from mcp.task.base import Task, WeightedTask
 from mcp.task.byol import BYOLTask
 from mcp.task.compute import TaskCompute
 from mcp.task.rotation import BatchRotation, RotationTask
+from mcp.task.solarization import BatchSolarization, SolarizationTask
 from mcp.task.supervised import SupervisedTask
 
 TasksTrain = NewType("TasksTrain", list)
@@ -30,6 +31,7 @@ class TaskModule(Module):
         self.device = device
         self._default_task_classes = {
             TaskType.ROTATION: RotationTask,
+            TaskType.SOLARIZATION: SolarizationTask,
             TaskType.SUPERVISED: SupervisedTask,
             TaskType.BYOL: BYOLTask,
         }
@@ -48,10 +50,27 @@ class TaskModule(Module):
 
     @provider
     @inject
+    @singleton
+    def provide_batch_solarization(
+        self, transforms: KorniaTransforms
+    ) -> BatchSolarization:
+        return BatchSolarization(transforms)
+
+    @provider
+    @inject
     def provide_rotation_task(
         self, compute: TaskCompute, batch_rotation: BatchRotation
     ) -> RotationTask:
         return RotationTask(self.config.model.embedding_size, compute, batch_rotation)
+
+    @provider
+    @inject
+    def provide_solarization_task(
+        self, compute: TaskCompute, batch_solarization: BatchSolarization
+    ) -> SolarizationTask:
+        return SolarizationTask(
+            self.config.model.embedding_size, compute, batch_solarization
+        )
 
     @provider
     @inject

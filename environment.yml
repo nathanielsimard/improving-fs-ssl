@@ -15,7 +15,7 @@ dependencies:
   - numpy
   - pandas
   - pyyaml
-  - kornia >= 0.3.0
   - pip
   - pip:
     - injector
+    - kornia

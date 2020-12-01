@@ -6,6 +6,7 @@ from mcp.config.loader import ConfigType
 
 class TaskType(Enum):
     SUPERVISED = "supervised"
+    SOLARIZATION = "solarization"
     ROTATION = "rotation"
     BYOL = "byol"
 

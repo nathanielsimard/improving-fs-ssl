@@ -1,12 +1,12 @@
 from copy import deepcopy
 from time import time as time
-from typing import Optional
+from typing import List, Optional
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
-from mcp.data.dataset.transforms import KorniaTransforms
+from mcp.data.dataset.transforms import KorniaTransforms, TransformType
 from mcp.model.base import freeze_weights
 from mcp.model.utils import BatchNormHead
 from mcp.task.base import Task, TaskOutput
@@ -39,12 +39,12 @@ class BYOLTask(Task):
         self._initial_state_dict = self.state_dict()
 
         self._training = True
-        self.transforms = [
+        self.transforms: List[TransformType] = [
             transforms.color_jitter(hue=0.2, p=0.8),
             transforms.grayscale(p=0.2),
             transforms.random_flip(),
             transforms.gaussian_blur(p=0.1),
-            transforms.random_crop(),
+            transforms.random_resized_crop(),
             transforms.normalize(),
         ]
 

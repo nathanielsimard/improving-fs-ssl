@@ -1,19 +1,20 @@
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 import torch
 from torch import nn
 
-from mcp.data.dataset.transforms import KorniaTransforms
+from mcp.data.dataset.transforms import KorniaTransforms, TransformType
 
 
 class TaskCompute(object):
     def __init__(self, transforms: KorniaTransforms):
-        self.transforms_train = [
+        self.transforms_train: List[TransformType] = [
             transforms.random_crop(),
             transforms.color_jitter(),
             transforms.random_flip(),
             transforms.normalize(),
         ]
+
         self.transforms_eval = [transforms.normalize()]
         self._cache: Dict[str, torch.Tensor] = {}
 

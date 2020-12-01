@@ -76,9 +76,13 @@ class Trainer(object):
             self._training_phase(epoch)
 
             metric = 0.0
+
+            logger_support = self.logger.support.epoch(epoch, self.epochs)
+            logger_eval = self.logger.evaluation.epoch(epoch, self.epochs)
+
             for dataloader_valid in self.dataloader_valids:
-                self._training_support_phase(epoch, dataloader_valid)
-                metric += self._evaluation_phase(epoch, dataloader_valid)
+                self._training_support_phase(epoch, dataloader_valid, logger_support)
+                metric += self._evaluation_phase(epoch, dataloader_valid, logger_eval)
 
             self._save_checkpoint(epoch, metric / len(self.dataloader_valids))
 
@@ -93,22 +97,19 @@ class Trainer(object):
             train_model=True,
         )
 
-    def _training_support_phase(self, epoch, dataloader_valid):
+    def _training_support_phase(self, epoch, dataloader_valid, logger_support):
         self.training_loop.fit_support(
             self.model,
             self.tasks_valid,
             dataloader_valid.support,
             self.optimizer_support,
             self.scheduler_support,
-            self.logger.support.epoch(epoch, self.epochs),
+            logger_support,
         )
 
-    def _evaluation_phase(self, epoch, dataloader_valid) -> float:
+    def _evaluation_phase(self, epoch, dataloader_valid, logger_eval) -> float:
         return self.training_loop.evaluate(
-            self.model,
-            self.tasks_valid,
-            dataloader_valid.query,
-            self.logger.evaluation.epoch(epoch, self.epochs),
+            self.model, self.tasks_valid, dataloader_valid.query, logger_eval,
         )
 
     def _save_checkpoint(self, epoch: int, metric: float):

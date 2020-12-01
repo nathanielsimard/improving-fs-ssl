@@ -13,16 +13,18 @@ from mcp.task.base import Task, TaskOutput
 from mcp.task.compute import TaskCompute
 
 
-class BatchRotation(object):
+class BatchSolarization(object):
     def __init__(
-        self, transforms: KorniaTransforms, degrees: List[int] = [0, 90, 180, 270]
+        self,
+        transforms: KorniaTransforms,
+        thresholds: List[float] = [0.0, 0.33, 0.66, 1.0],
     ):
-        self.rotations = [transforms.rotate(d) for d in degrees]
+        self.solarizations = [transforms.solarize(t, p=1.0) for t in thresholds]
         self.normalize = transforms.normalize()
-        self.num_classes = len(degrees)
+        self.num_classes = len(thresholds)
 
-    def rotate(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        tfm_ids = list(range(len(self.rotations)))
+    def solarize(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        tfm_ids = list(range(len(self.solarizations)))
         sample_ids = list(range(x.size(0)))
         random.shuffle(sample_ids)
         batch_ids: Dict[int, List[int]] = defaultdict(lambda: [])
@@ -35,30 +37,33 @@ class BatchRotation(object):
         labels = torch.empty(x.size(0), dtype=torch.long, device=x.device)
 
         for tfm_id, ids in batch_ids.items():
-            out[ids] = self.rotations[tfm_id](self.normalize(x[ids]))
+            out[ids] = self.solarizations[tfm_id](self.normalize(x[ids]))
             labels[ids] = torch.tensor(tfm_id, dtype=labels.dtype, device=labels.device)
 
         return out, labels
 
 
-class RotationTask(Task):
+class SolarizationTask(Task):
     def __init__(
-        self, embedding_size: int, compute: TaskCompute, batch_rotation: BatchRotation,
+        self,
+        embedding_size: int,
+        compute: TaskCompute,
+        batch_solarization: BatchSolarization,
     ):
         super().__init__()
         self.metric = Accuracy()
         self.head = BatchNormHead(embedding_size, embedding_size, embedding_size)
-        self.output = nn.Linear(embedding_size, batch_rotation.num_classes)
+        self.output = nn.Linear(embedding_size, batch_solarization.num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.compute = compute
-        self.batch_rotation = batch_rotation
+        self.batch_solarization = batch_solarization
 
         self._initial_state_dict = self.state_dict()
         self._training = True
 
     @property
     def name(self):
-        return "Rotation"
+        return "Solarization"
 
     @property
     def initial_state_dict(self):
@@ -67,7 +72,7 @@ class RotationTask(Task):
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
-        x, y = self.batch_rotation.rotate(x)
+        x, y = self.batch_solarization.solarize(x)
         x = encoder(x)
         x = self.head(x)
         x = self.output(x)
@@ -81,9 +86,9 @@ class RotationTask(Task):
         import torchvision.utils as tvu
 
         tvu.save_image(x[0], "/tmp/test-ori.png")
-        x, y = self.batch_rotation.rotate(x)
-        tvu.save_image(x[0], "/tmp/test-rot.png")
-        print(f"Rotate the thing {y[0]}")
+        x, y = self.batch_solarization.solarize(x)
+        tvu.save_image(x[0], "/tmp/test-solarization.png")
+        print(f"Solarize the thing {y[0]}")
         raise Exception("Exit")
 
     def train(self, mode: bool = True):

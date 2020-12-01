@@ -14,5 +14,5 @@ optimizer:
 evaluation:
   num_iterations: 10
 task:
-  train: ["byol"]
+  train: ["rotation"]
   weights: [1.0]
