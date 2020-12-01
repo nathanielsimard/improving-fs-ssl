@@ -6,6 +6,7 @@ from mcp.config.loader import ConfigType
 
 class Source(Enum):
     CIFAR_FS = "cifar_fs"
+    MINI_IMAGE_NET = "mini_image_net"
 
 
 class CifarFsConfig(NamedTuple):

@@ -1,5 +1,5 @@
 dataset:
-  source: cifar_fs
+  source: mini_image_net
 scheduler:
   train:
     multistep:
