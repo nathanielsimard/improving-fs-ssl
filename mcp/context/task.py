@@ -80,7 +80,7 @@ class TaskModule(Module):
             transforms,
             self.config.task.byol.head_size,
             self.config.task.byol.tau,
-            self.config.task.byol.scale,
+            tuple(self.config.task.byol.scale),  # type: ignore
         )
 
     @provider

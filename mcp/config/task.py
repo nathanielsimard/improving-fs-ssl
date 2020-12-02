@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, NamedTuple, Tuple
+from typing import List, NamedTuple
 
 from mcp.config.loader import ConfigType
 
@@ -14,7 +14,7 @@ class TaskType(Enum):
 class BYOLConfig(NamedTuple):
     head_size: int
     tau: float
-    scale: Tuple[float, float]
+    scale: List[float]
 
 
 class TaskConfig(NamedTuple):
@@ -45,6 +45,4 @@ def _parse_byol(config: ConfigType) -> BYOLConfig:
 
     assert len(scale) == 2, "Scale must have two values"
 
-    return BYOLConfig(
-        head_size=config["head_size"], tau=config["tau"], scale=tuple(scale),  # type: ignore
-    )
+    return BYOLConfig(head_size=config["head_size"], tau=config["tau"], scale=scale)
