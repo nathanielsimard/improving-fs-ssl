@@ -1,0 +1,17 @@
+dataset:
+  source: mini_image_net
+dataloader:
+  batch_size: 128
+scheduler:
+  train:
+    multistep:
+      milestones: [45, 60, 75]
+trainer:
+  epochs: 90
+  support_training:
+    max_epochs: 300
+optimizer:
+  train:
+    learning_rate: 0.05
+evaluation:
+  num_iterations: 250
