@@ -79,6 +79,7 @@ class TaskModule(Module):
             self.config.model.embedding_size,
             transforms,
             self.config.task.byol.head_size,
+            self.config.task.byol.hidden_size,
             self.config.task.byol.tau,
             tuple(self.config.task.byol.scale),  # type: ignore
         )

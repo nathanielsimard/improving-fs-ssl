@@ -13,6 +13,7 @@ class TaskType(Enum):
 
 class BYOLConfig(NamedTuple):
     head_size: int
+    hidden_size: int
     tau: float
     scale: List[float]
 
@@ -45,4 +46,4 @@ def _parse_byol(config: ConfigType) -> BYOLConfig:
 
     assert len(scale) == 2, "Scale must have two values"
 
-    return BYOLConfig(head_size=config["head_size"], tau=config["tau"], scale=scale)
+    return BYOLConfig(head_size=config["head_size"], hidden_size=config["hidden_size"], tau=config["tau"], scale=scale)
