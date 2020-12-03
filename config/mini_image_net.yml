@@ -15,3 +15,7 @@ optimizer:
     learning_rate: 0.05
 evaluation:
   num_iterations: 250
+transform:
+  image_size: [84, 84]
+  crop_size: [84, 84]
+  crop_padding: 8
