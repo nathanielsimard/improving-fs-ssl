@@ -3,6 +3,7 @@ from typing import Callable, Tuple
 
 import torch
 import torchvision.transforms as transforms
+from kornia import Resize
 from kornia.augmentation import (
     ColorJitter,
     Normalize,
@@ -45,16 +46,21 @@ class KorniaTransforms(object):
         self,
         mean: FloatSequenceType,
         std: FloatSequenceType,
+        image_size: Tuple[int, int],
         random_crop_size: Tuple[int, int],
         random_crop_padding: int,
     ):
         self.mean = mean
         self.std = std
+        self.image_size = image_size
         self.random_crop_size = random_crop_size
         self.random_crop_padding = random_crop_padding
 
     def normalize(self) -> TransformType:
         return Normalize(torch.tensor(self.mean), torch.tensor(self.std))
+
+    def resize(self) -> TransformType:
+        return Resize(self.image_size)
 
     def random_crop(self) -> TransformType:
         return RandomCrop(self.random_crop_size, padding=self.random_crop_padding)

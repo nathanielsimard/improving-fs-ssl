@@ -9,13 +9,14 @@ from mcp.data.dataset.transforms import KorniaTransforms, TransformType
 class TaskCompute(object):
     def __init__(self, transforms: KorniaTransforms):
         self.transforms_train: List[TransformType] = [
+            transforms.resize(),
             transforms.random_crop(),
             transforms.color_jitter(),
             transforms.random_flip(),
             transforms.normalize(),
         ]
 
-        self.transforms_eval = [transforms.normalize()]
+        self.transforms_eval = [transforms.random_crop(), transforms.normalize()]
         self._cache: Dict[str, torch.Tensor] = {}
 
     def cache_transform(self, x: torch.Tensor, training: bool, key="default-transform"):

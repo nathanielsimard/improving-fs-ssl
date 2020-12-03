@@ -19,6 +19,8 @@ from mcp.config.task import TaskConfig
 from mcp.config.task import parse as parse_task
 from mcp.config.trainer import TrainerConfig
 from mcp.config.trainer import parse as parse_trainer
+from mcp.config.transform import TransformConfig
+from mcp.config.transform import parse as parse_transform
 
 _DEFAULT_OPTIMIZER_CONFIG = {
     "type": "sgd",
@@ -70,6 +72,7 @@ DEFAULT_CONFIG: ConfigType = {
         "weights": [1, 250],
     },
     "model": {"embedding_size": 512},
+    "transform": {"crop_size": [96, 96], "crop_padding": 4, "image_size": [96, 96]},
     "evaluation": {"num_iterations": 25, "metric": "metric"},
 }
 
@@ -84,6 +87,7 @@ class ExperimentConfig(NamedTuple):
     model: ModelConfig
     evaluation: EvaluationConfig
     task: TaskConfig
+    transform: TransformConfig
 
 
 def parse(
@@ -110,4 +114,5 @@ def parse(
         model=parse_model(config),
         evaluation=parse_evaluation(config),
         task=parse_task(config),
+        transform=parse_transform(config),
     )

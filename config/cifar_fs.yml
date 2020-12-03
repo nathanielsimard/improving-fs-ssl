@@ -18,3 +18,7 @@ evaluation:
 task:
   byol:
     scale: [0.4, 1.0]
+transform:
+  image_size: [96, 96]
+  crop_size: [96, 96]
+  crop_padding: 4

@@ -20,10 +20,12 @@ class BatchSolarization(object):
         thresholds: List[float] = [0.0, 0.33, 0.66, 1.0],
     ):
         self.solarizations = [transforms.solarize(t, p=1.0) for t in thresholds]
-        self.normalize = transforms.normalize()
+        self.default_transforms = [transforms.resize(), transforms.normalize()]
         self.num_classes = len(thresholds)
 
     def solarize(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        x = self.transform(x)
+
         tfm_ids = list(range(len(self.solarizations)))
         sample_ids = list(range(x.size(0)))
         random.shuffle(sample_ids)
@@ -37,10 +39,15 @@ class BatchSolarization(object):
         labels = torch.empty(x.size(0), dtype=torch.long, device=x.device)
 
         for tfm_id, ids in batch_ids.items():
-            out[ids] = self.solarizations[tfm_id](self.normalize(x[ids]))
+            out[ids] = self.solarizations[tfm_id](x[ids])
             labels[ids] = torch.tensor(tfm_id, dtype=labels.dtype, device=labels.device)
 
         return out, labels
+
+    def transform(self, x: torch.Tensor):
+        for t in self.default_transforms:
+            x = t(x)
+        return x
 
 
 class SolarizationTask(Task):
