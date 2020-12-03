@@ -5,9 +5,9 @@ dataloader:
 scheduler:
   train:
     multistep:
-      milestones: [45, 60, 75]
+      milestones: [50, 65, 80]
 trainer:
-  epochs: 90
+  epochs: 100
   support_training:
     max_epochs: 300
 optimizer:
