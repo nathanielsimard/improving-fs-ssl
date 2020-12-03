@@ -15,3 +15,10 @@ optimizer:
     learning_rate: 0.05
 evaluation:
   num_iterations: 250
+task:
+  byol:
+    scale: [0.2, 1.0]
+transform:
+  image_size: [96, 96]
+  crop_size: [96, 96]
+  crop_padding: 4

@@ -18,10 +18,12 @@ class BatchRotation(object):
         self, transforms: KorniaTransforms, degrees: List[int] = [0, 90, 180, 270]
     ):
         self.rotations = [transforms.rotate(d) for d in degrees]
-        self.normalize = transforms.normalize()
+        self.default_transforms = [transforms.resize(), transforms.normalize()]
         self.num_classes = len(degrees)
 
     def rotate(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        x = self.transform(x)
+
         tfm_ids = list(range(len(self.rotations)))
         sample_ids = list(range(x.size(0)))
         random.shuffle(sample_ids)
@@ -35,10 +37,15 @@ class BatchRotation(object):
         labels = torch.empty(x.size(0), dtype=torch.long, device=x.device)
 
         for tfm_id, ids in batch_ids.items():
-            out[ids] = self.rotations[tfm_id](self.normalize(x[ids]))
+            out[ids] = self.rotations[tfm_id](x[ids])
             labels[ids] = torch.tensor(tfm_id, dtype=labels.dtype, device=labels.device)
 
         return out, labels
+
+    def transform(self, x: torch.Tensor):
+        for t in self.default_transforms:
+            x = t(x)
+        return x
 
 
 class RotationTask(Task):
