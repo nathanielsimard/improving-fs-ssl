@@ -16,7 +16,7 @@ class TaskCompute(object):
             transforms.normalize(),
         ]
 
-        self.transforms_eval = [transforms.random_crop(), transforms.normalize()]
+        self.transforms_eval = [transforms.resize(), transforms.normalize()]
         self._cache: Dict[str, torch.Tensor] = {}
 
     def cache_transform(self, x: torch.Tensor, training: bool, key="default-transform"):
