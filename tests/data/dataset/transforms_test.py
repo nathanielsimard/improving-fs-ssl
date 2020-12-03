@@ -13,7 +13,7 @@ STD = (0.2675, 0.2565, 0.2761)
 class KorniaTransformTest(unittest.TestCase):
     def setUp(self):
         self.dataset = create_random_dataset(100, 3, (3, 12, 12))
-        self.transforms = KorniaTransforms(MEAN, STD, (10, 10), 2)
+        self.transforms = KorniaTransforms(MEAN, STD, (10, 10), (10, 10), 2)
 
     def test_whenRotateWith0Degree_shouldNotRotateImage(self):
         for i in range(len(self.dataset)):

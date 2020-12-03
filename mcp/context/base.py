@@ -154,10 +154,20 @@ class TrainerModule(Module):
     @singleton
     def provide_kornia_transformations(self) -> KorniaTransforms:
         if self.config.dataset.source == Source.CIFAR_FS:
-            return KorniaTransforms(cifar.IMAGES_MEAN, cifar.IMAGES_STD, (32, 32), 4)
+            return KorniaTransforms(
+                cifar.IMAGES_MEAN,
+                cifar.IMAGES_STD,
+                tuple(self.config.transform.image_size),  # type: ignore
+                tuple(self.config.transform.crop_size),  # type: ignore
+                self.config.transform.crop_padding,
+            )
         elif self.config.dataset.source == Source.MINI_IMAGE_NET:
             return KorniaTransforms(
-                mini_imagenet.IMAGE_MEAN, mini_imagenet.IMAGES_STD, (84, 84), 8
+                mini_imagenet.IMAGE_MEAN,
+                mini_imagenet.IMAGES_STD,
+                tuple(self.config.transform.image_size),  # type: ignore
+                tuple(self.config.transform.crop_size),  # type: ignore
+                self.config.transform.crop_padding,
             )
         else:
             raise ValueError(

@@ -10,4 +10,4 @@ class ModelConfig(NamedTuple):
 def parse(config: ConfigType) -> ModelConfig:
     config = config["model"]
 
-    return ModelConfig(embedding_size=config["embedding_size"],)
+    return ModelConfig(embedding_size=config["embedding_size"])

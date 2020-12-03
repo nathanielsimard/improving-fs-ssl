@@ -1,5 +1,5 @@
 dataset:
-  source: mini_image_net
+  source: cifar_fs
 scheduler:
   train:
     multistep:
@@ -14,5 +14,5 @@ optimizer:
 evaluation:
   num_iterations: 10
 task:
-  train: ["rotation"]
-  weights: [1.0]
+  train: ["rotation", "byol", "supervised", "solarization"]
+  weights: [1.0, 1.0, 1.0, 1.0]
