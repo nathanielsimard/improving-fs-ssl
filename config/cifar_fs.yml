@@ -15,3 +15,6 @@ optimizer:
     learning_rate: 0.05
 evaluation:
   num_iterations: 250
+task:
+  byol:
+    scale: [0.4, 1.0]

@@ -59,8 +59,8 @@ class KorniaTransforms(object):
     def random_crop(self) -> TransformType:
         return RandomCrop(self.random_crop_size, padding=self.random_crop_padding)
 
-    def random_resized_crop(self, p=1.0) -> TransformType:
-        return RandomResizedCrop(self.random_crop_size, p=p)
+    def random_resized_crop(self, p=1.0, scale=(0.08, 1.0)) -> TransformType:
+        return RandomResizedCrop(self.random_crop_size, scale=scale, p=p)
 
     def random_flip(self, p: float = 0.5) -> TransformType:
         return RandomHorizontalFlip(p=p)

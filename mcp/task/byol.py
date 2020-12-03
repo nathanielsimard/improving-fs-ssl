@@ -1,6 +1,6 @@
 from copy import deepcopy
 from time import time as time
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -25,12 +25,14 @@ class BYOLTask(Task):
         embedding_size: int,
         transforms: KorniaTransforms,
         head_size: int,
+        hidden_size: int,
         tau: float,
+        scale: Tuple[float, float],
     ):
         super().__init__()
         self.tau = tau
-        head_projection = BatchNormHead(embedding_size, head_size, head_size)
-        head_prediction = BatchNormHead(head_size, head_size, head_size)
+        head_projection = BatchNormHead(embedding_size, hidden_size, head_size)
+        head_prediction = BatchNormHead(head_size, hidden_size, head_size)
 
         self.trainable = TrainableModule(head_projection, head_prediction)
 
@@ -44,7 +46,7 @@ class BYOLTask(Task):
             transforms.grayscale(p=0.2),
             transforms.random_flip(),
             transforms.gaussian_blur(p=0.1),
-            transforms.random_resized_crop(),
+            transforms.random_resized_crop(scale=scale),
             transforms.normalize(),
         ]
 

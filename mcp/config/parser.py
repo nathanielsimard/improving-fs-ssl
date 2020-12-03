@@ -61,7 +61,12 @@ DEFAULT_CONFIG: ConfigType = {
     "task": {
         "train": ["rotation", "byol"],
         "valid": ["supervised"],
-        "byol": {"head_size": 128, "tau": 0.99},
+        "byol": {
+            "head_size": 128,
+            "hidden_size": 2048,
+            "tau": 0.99,
+            "scale": [0.08, 1.0],
+        },
         "weights": [1, 250],
     },
     "model": {"embedding_size": 512},
