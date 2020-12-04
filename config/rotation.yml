@@ -1,0 +1,3 @@
+task:
+  train: ["rotation"]
+  weights: [1.0]
