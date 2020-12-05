@@ -50,7 +50,11 @@ class BatchRotation(object):
 
 class RotationTask(Task):
     def __init__(
-        self, embedding_size: int, compute: TaskCompute, batch_rotation: BatchRotation,
+        self,
+        embedding_size: int,
+        compute: TaskCompute,
+        batch_rotation: BatchRotation,
+        compute_tfm: bool = False,
     ):
         super().__init__()
         self.metric = Accuracy()
@@ -59,6 +63,7 @@ class RotationTask(Task):
         self.loss = nn.CrossEntropyLoss()
         self.compute = compute
         self.batch_rotation = batch_rotation
+        self.compute_tfm = compute_tfm
 
         self._initial_state_dict = self.state_dict()
         self._training = True
@@ -74,6 +79,8 @@ class RotationTask(Task):
     def run(
         self, encoder: nn.Module, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> TaskOutput:
+        if self.compute_tfm:
+            x = self.compute.cache_transform(x, self._training)
         x, y = self.batch_rotation.rotate(x)
         x = encoder(x)
         x = self.head(x)

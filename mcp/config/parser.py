@@ -69,6 +69,7 @@ DEFAULT_CONFIG: ConfigType = {
             "tau": 0.99,
             "scale": [0.08, 1.0],
         },
+        "rotation": {"compute_tfm": False},
         "weights": [1, 250],
     },
     "model": {"embedding_size": 512},

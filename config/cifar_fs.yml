@@ -18,6 +18,8 @@ evaluation:
 task:
   byol:
     scale: [0.35, 1.0]
+  rotation:
+    compute_tfm: False
 transform:
   image_size: [96, 96]
   crop_size: [96, 96]

@@ -11,6 +11,10 @@ class TaskType(Enum):
     BYOL = "byol"
 
 
+class RotationConfig(NamedTuple):
+    compute_tfm: bool
+
+
 class BYOLConfig(NamedTuple):
     head_size: int
     hidden_size: int
@@ -23,6 +27,7 @@ class TaskConfig(NamedTuple):
     weights: List[float]
     valid: List[TaskType]
     byol: BYOLConfig
+    rotation: RotationConfig
 
 
 def parse(config: ConfigType) -> TaskConfig:
@@ -32,6 +37,7 @@ def parse(config: ConfigType) -> TaskConfig:
         weights=config["weights"],
         valid=[TaskType(t) for t in config["valid"]],
         byol=_parse_byol(config),
+        rotation=_parse_rotation(config),
     )
 
     assert len(task_config.train) == len(
@@ -52,3 +58,9 @@ def _parse_byol(config: ConfigType) -> BYOLConfig:
         tau=config["tau"],
         scale=scale,
     )
+
+
+def _parse_rotation(config: ConfigType) -> RotationConfig:
+    config = config["rotation"]
+
+    return RotationConfig(compute_tfm=config["compute_tfm"],)

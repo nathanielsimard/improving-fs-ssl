@@ -61,7 +61,12 @@ class TaskModule(Module):
     def provide_rotation_task(
         self, compute: TaskCompute, batch_rotation: BatchRotation
     ) -> RotationTask:
-        return RotationTask(self.config.model.embedding_size, compute, batch_rotation)
+        return RotationTask(
+            self.config.model.embedding_size,
+            compute,
+            batch_rotation,
+            compute_tfm=self.config.task.rotation.compute_tfm,
+        )
 
     @provider
     @inject
