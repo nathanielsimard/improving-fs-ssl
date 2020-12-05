@@ -43,7 +43,7 @@ class BYOLTask(Task):
         self._training = True
         self.transforms: List[TransformType] = [
             transforms.resize(),
-            transforms.color_jitter(hue=0.2, p=0.8),
+            transforms.color_jitter(hue=0.1, p=0.8),
             transforms.grayscale(p=0.2),
             transforms.random_flip(),
             transforms.gaussian_blur(p=0.1),
