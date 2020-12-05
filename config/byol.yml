@@ -5,4 +5,3 @@ scheduler:
 task:
   train: ["byol"]
   weights: [1.0]
-
