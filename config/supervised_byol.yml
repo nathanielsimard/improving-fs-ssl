@@ -1,3 +1,7 @@
+scheduler:
+  train:
+    multistep:
+      milestones: [60, 80]
 task:
   train: ["supervised", "byol"]
   weights: [1.0, 1.0]
