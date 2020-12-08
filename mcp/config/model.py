@@ -7,6 +7,7 @@ from mcp.config.loader import ConfigType
 class ModelArchitecture(Enum):
     RESNET_50 = "resnet-50"
     RESNET_18 = "resnet-18"
+    RESNET_12 = "resnet-12"
 
 
 class ModelConfig(NamedTuple):

@@ -3,6 +3,7 @@ from torch import nn
 from torchvision.models.resnet import BasicBlock, Bottleneck, ResNet
 
 from mcp.model.base import Model
+from mcp.model.resnet_12 import resnet12
 
 
 class Identity(nn.Module):
@@ -43,3 +44,14 @@ class ResNet50(_ResNet):
         super().__init__(
             ResNet(block, [3, 4, 6, 3], embed_size), embed_size, block.expansion
         )
+
+
+class ResNet12(Model):
+    def __init__(self, embed_size: int):
+        super().__init__()
+        # With avg pool: 2560
+        # Else: 23040
+        self._model = resnet12(avg_pool=True)
+
+    def forward(self, x):
+        return self._model(x)
