@@ -72,7 +72,7 @@ DEFAULT_CONFIG: ConfigType = {
         "rotation": {"compute_tfm": False},
         "weights": [1, 250],
     },
-    "model": {"embedding_size": 512},
+    "model": {"embedding_size": 512, "architecture": "resnet-18"},
     "transform": {"crop_size": [96, 96], "crop_padding": 4, "image_size": [96, 96]},
     "evaluation": {"num_iterations": 25, "metric": "metric"},
 }
