@@ -1,0 +1,3 @@
+model: 
+  embedding_size: 2048
+  architecture: "resnet-50"

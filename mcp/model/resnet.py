@@ -16,7 +16,11 @@ class Identity(nn.Module):
 class _ResNet(Model):
     def __init__(self, resnet: ResNet, embed_size: int, expansion: int):
         super().__init__()
-        assert embed_size == 512 * expansion, "Embedding size must match ResNet output."
+        if embed_size != 512 * expansion:
+            raise ValueError(
+                f"Embedding size must match ResNet output. Received {embed_size}, but expected {512 * expansion}"
+            )
+
         self.encoder = resnet
         # Overwrite FC layer of our encoder
         self.encoder.fc = Identity()
