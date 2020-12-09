@@ -62,6 +62,7 @@ class SupervisedTask(Task):
 
 class MultipleSupervisedTasks(Task):
     def __init__(self, tasks: List[SupervisedTask]):
+        super().__init__()
         self.tasks = nn.ModuleList(tasks)
 
         self._initial_state_dict = self.state_dict()
