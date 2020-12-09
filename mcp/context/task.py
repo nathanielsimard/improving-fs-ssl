@@ -83,7 +83,14 @@ class TaskModule(Module):
 
     @provider
     @inject
-    def provide_byol_task(self, transforms: KorniaTransforms) -> BYOLTask:
+    def provide_byol_task(
+        self, transforms: KorniaTransforms, compute: TaskCompute
+    ) -> BYOLTask:
+        def fix_key(key):
+            if key is None:
+                return None
+            return tuple(key)
+
         return BYOLTask(
             self.config.model.embedding_size,
             transforms,
@@ -91,6 +98,9 @@ class TaskModule(Module):
             self.config.task.byol.hidden_size,
             self.config.task.byol.tau,
             tuple(self.config.transform.scale),  # type: ignore
+            fix_key(self.config.task.byol.key_transforms),
+            fix_key(self.config.task.byol.key_forwards),
+            compute,
         )
 
     @provider
@@ -99,7 +109,11 @@ class TaskModule(Module):
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskTrain:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.train_num_class, compute
+            self.config.model.embedding_size,
+            metadata.train_num_class,
+            compute,
+            self.config.task.supervised.key_transform,
+            self.config.task.supervised.key_forward,
         )
 
     @provider
@@ -108,7 +122,11 @@ class TaskModule(Module):
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskValid:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.valid_num_class, compute
+            self.config.model.embedding_size,
+            metadata.valid_num_class,
+            compute,
+            self.config.task.supervised.key_transform,
+            self.config.task.supervised.key_forward,
         )
 
     @provider
@@ -118,7 +136,11 @@ class TaskModule(Module):
         self, metadata: DatasetMetadata, compute: TaskCompute,
     ) -> TaskTest:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.test_num_class, compute
+            self.config.model.embedding_size,
+            metadata.test_num_class,
+            compute,
+            self.config.task.supervised.key_transform,
+            self.config.task.supervised.key_forward,
         )
 
     @multiprovider

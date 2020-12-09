@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Optional
 
 from mcp.config.loader import ConfigType
 
@@ -19,6 +19,13 @@ class BYOLConfig(NamedTuple):
     head_size: int
     hidden_size: int
     tau: float
+    key_forwards: Optional[List[str]]
+    key_transforms: Optional[List[str]]
+
+
+class SupervisedConfig(NamedTuple):
+    key_forward: str
+    key_transform: str
 
 
 class TaskConfig(NamedTuple):
@@ -27,6 +34,7 @@ class TaskConfig(NamedTuple):
     valid: List[TaskType]
     byol: BYOLConfig
     rotation: RotationConfig
+    supervised: SupervisedConfig
 
 
 def parse(config: ConfigType) -> TaskConfig:
@@ -37,6 +45,7 @@ def parse(config: ConfigType) -> TaskConfig:
         valid=[TaskType(t) for t in config["valid"]],
         byol=_parse_byol(config),
         rotation=_parse_rotation(config),
+        supervised=_parse_supervised(config),
     )
 
     assert len(task_config.train) == len(
@@ -48,14 +57,34 @@ def parse(config: ConfigType) -> TaskConfig:
 def _parse_byol(config: ConfigType) -> BYOLConfig:
     config = config["byol"]
 
+    key_transforms = config["key_transforms"]
+
+    if key_transforms is not None:
+        assert len(key_transforms) == 2, "Should have two keys"
+
+    key_forwards = config["key_forwards"]
+
+    if key_forwards is not None:
+        assert len(key_forwards) == 2, "Should have two keys"
+
     return BYOLConfig(
         head_size=config["head_size"],
         hidden_size=config["hidden_size"],
         tau=config["tau"],
+        key_forwards=key_forwards,
+        key_transforms=key_transforms,
+    )
+
+
+def _parse_supervised(config: ConfigType) -> SupervisedConfig:
+    config = config["supervised"]
+
+    return SupervisedConfig(
+        key_transform=config["key_transform"], key_forward=config["key_forward"]
     )
 
 
 def _parse_rotation(config: ConfigType) -> RotationConfig:
     config = config["rotation"]
 
-    return RotationConfig(compute_tfm=config["compute_tfm"],)
+    return RotationConfig(compute_tfm=config["compute_tfm"])

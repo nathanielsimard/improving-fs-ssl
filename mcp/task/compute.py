@@ -22,7 +22,7 @@ class TaskCompute(object):
     def cache_transform(self, x: torch.Tensor, training: bool, key="default-transform"):
         return self.cache(lambda: self.transform(x, training), key)
 
-    def cache_forward(self, x: torch.Tensor, module: nn.Module, key="default-key"):
+    def cache_forward(self, x: torch.Tensor, module: nn.Module, key="default-forward"):
         return self.cache(lambda: module(x), key)
 
     def cache(

@@ -63,9 +63,19 @@ DEFAULT_CONFIG: ConfigType = {
     "task": {
         "train": ["rotation", "byol"],
         "valid": ["supervised"],
-        "byol": {"head_size": 128, "hidden_size": 2048, "tau": 0.99},
+        "byol": {
+            "head_size": 128,
+            "hidden_size": 2048,
+            "tau": 0.99,
+            "key_transforms": None,
+            "key_forwards": None,
+        },
         "rotation": {"compute_tfm": False},
         "weights": [1, 250],
+        "supervised": {
+            "key_transform": "default-transform",
+            "key_forward": "default-forward",
+        },
     },
     "model": {"embedding_size": 512, "architecture": "resnet-18"},
     "transform": {

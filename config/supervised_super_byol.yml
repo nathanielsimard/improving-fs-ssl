@@ -1,0 +1,15 @@
+scheduler:
+  train:
+    multistep:
+      milestones: [60, 80]
+task:
+  train: ["supervised", "byol"]
+  weights: [1.0, 1.0]
+  byol:
+    key_transforms: ["key-transform-1", "key-transform-2"]
+    key_forwards: ["key-forward-1", "key-forward-2"]
+  supervised:
+    key_transform: "key-transform-1"
+    key_forward: "key-forward-1"
+transform:
+  difficulty: "hard"

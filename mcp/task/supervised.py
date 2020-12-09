@@ -10,9 +10,18 @@ from mcp.task.compute import TaskCompute
 
 
 class SupervisedTask(Task):
-    def __init__(self, embedding_size: int, num_classes: int, compute: TaskCompute):
+    def __init__(
+        self,
+        embedding_size: int,
+        num_classes: int,
+        compute: TaskCompute,
+        key_transform: str,
+        key_forward: str,
+    ):
         super().__init__()
         self.compute = compute
+        self.key_forward = key_forward
+        self.key_transform = key_transform
 
         self.metric = Accuracy()
         self.output = nn.Linear(embedding_size, num_classes)
@@ -35,8 +44,8 @@ class SupervisedTask(Task):
         if y is None:
             raise ValueError("Labels are required for supervised task")
 
-        x = self.compute.cache_transform(x, self._training)
-        x = self.compute.cache_forward(x, encoder)
+        x = self.compute.cache_transform(x, self._training, key=self.key_transform)
+        x = self.compute.cache_forward(x, encoder, key=self.key_forward)
 
         x = self.output(x)
 
