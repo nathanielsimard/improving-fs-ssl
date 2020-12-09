@@ -9,7 +9,7 @@ task:
     key_transforms: ["key-transform-1", "key-transform-2"]
     key_forwards: ["key-forward-1", "key-forward-2"]
   supervised:
-    key_transforms: ["key-transform-1"]
-    key_forwards: ["key-forward-1"]
+    key_transforms: ["key-transform-1", "key-transform-2"]
+    key_forwards: ["key-forward-1", "key-forward-2"]
 transform:
   difficulty: "hard"

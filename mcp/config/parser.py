@@ -73,8 +73,8 @@ DEFAULT_CONFIG: ConfigType = {
         "rotation": {"compute_tfm": False},
         "weights": [1, 250],
         "supervised": {
-            "key_transform": "default-transform",
-            "key_forward": "default-forward",
+            "key_transforms": ["default-transform"],
+            "key_forwards": ["default-forward"],
         },
     },
     "model": {"embedding_size": 512, "architecture": "resnet-18"},

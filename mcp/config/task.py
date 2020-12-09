@@ -24,8 +24,8 @@ class BYOLConfig(NamedTuple):
 
 
 class SupervisedConfig(NamedTuple):
-    key_forward: str
-    key_transform: str
+    key_forwards: List[str]
+    key_transforms: List[str]
 
 
 class TaskConfig(NamedTuple):
@@ -79,9 +79,13 @@ def _parse_byol(config: ConfigType) -> BYOLConfig:
 def _parse_supervised(config: ConfigType) -> SupervisedConfig:
     config = config["supervised"]
 
-    return SupervisedConfig(
-        key_transform=config["key_transform"], key_forward=config["key_forward"]
-    )
+    key_transforms = config["key_transforms"]
+    assert len(key_transforms) > 0, "Should have at least 1 key"
+
+    key_forwards = config["key_forwards"]
+    assert len(key_forwards) > 0, "Should have at least 1 key"
+
+    return SupervisedConfig(key_transforms=key_transforms, key_forwards=key_forwards)
 
 
 def _parse_rotation(config: ConfigType) -> RotationConfig:

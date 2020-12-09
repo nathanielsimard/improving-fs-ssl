@@ -13,7 +13,7 @@ from mcp.task.byol import BYOLTask
 from mcp.task.compute import TaskCompute
 from mcp.task.rotation import BatchRotation, RotationTask
 from mcp.task.solarization import BatchSolarization, SolarizationTask
-from mcp.task.supervised import SupervisedTask
+from mcp.task.supervised import MultipleSupervisedTasks, SupervisedTask
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
@@ -108,13 +108,26 @@ class TaskModule(Module):
     def provide_train_supervised_task(
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskTrain:
-        return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size,
-            metadata.train_num_class,
-            compute,
-            self.config.task.supervised.key_transform,
-            self.config.task.supervised.key_forward,
-        )
+        key_transforms = self.config.task.supervised.key_transforms
+        key_forwards = self.config.task.supervised.key_forwards
+
+        def _task(key_tr, key_fo):
+            return SupervisedTask(  # type: ignore
+                self.config.model.embedding_size,
+                metadata.train_num_class,
+                compute,
+                key_tr,
+                key_fo,
+            )
+
+        keys = list(zip(key_transforms, key_forwards))
+
+        if len(keys) == 1:
+            return _task(key_transforms[0], key_forwards[0])
+        else:
+            return MultipleSupervisedTasks(
+                [_task(key_tr, key_fo) for key_tr, key_fo in keys]
+            )
 
     @provider
     @inject
@@ -122,11 +135,7 @@ class TaskModule(Module):
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskValid:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size,
-            metadata.valid_num_class,
-            compute,
-            self.config.task.supervised.key_transform,
-            self.config.task.supervised.key_forward,
+            self.config.model.embedding_size, metadata.valid_num_class, compute,
         )
 
     @provider
@@ -136,11 +145,7 @@ class TaskModule(Module):
         self, metadata: DatasetMetadata, compute: TaskCompute,
     ) -> TaskTest:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size,
-            metadata.test_num_class,
-            compute,
-            self.config.task.supervised.key_transform,
-            self.config.task.supervised.key_forward,
+            self.config.model.embedding_size, metadata.test_num_class, compute,
         )
 
     @multiprovider
