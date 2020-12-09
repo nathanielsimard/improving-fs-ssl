@@ -40,7 +40,11 @@ class TaskModule(Module):
     @inject
     @singleton
     def provide_compute(self, transforms: KorniaTransforms) -> TaskCompute:
-        return TaskCompute(transforms)
+        return TaskCompute(
+            transforms,
+            self.config.transform.difficulty,
+            tuple(self.config.transform.scale),  # type: ignore
+        )
 
     @provider
     @inject
@@ -86,7 +90,7 @@ class TaskModule(Module):
             self.config.task.byol.head_size,
             self.config.task.byol.hidden_size,
             self.config.task.byol.tau,
-            tuple(self.config.task.byol.scale),  # type: ignore
+            tuple(self.config.transform.scale),  # type: ignore
         )
 
     @provider

@@ -63,17 +63,18 @@ DEFAULT_CONFIG: ConfigType = {
     "task": {
         "train": ["rotation", "byol"],
         "valid": ["supervised"],
-        "byol": {
-            "head_size": 128,
-            "hidden_size": 2048,
-            "tau": 0.99,
-            "scale": [0.08, 1.0],
-        },
+        "byol": {"head_size": 128, "hidden_size": 2048, "tau": 0.99},
         "rotation": {"compute_tfm": False},
         "weights": [1, 250],
     },
     "model": {"embedding_size": 512, "architecture": "resnet-18"},
-    "transform": {"crop_size": [96, 96], "crop_padding": 4, "image_size": [96, 96]},
+    "transform": {
+        "difficulty": "default",
+        "crop_size": [96, 96],
+        "crop_padding": 4,
+        "image_size": [96, 96],
+        "scale": [0.08, 1.0],
+    },
     "evaluation": {"num_iterations": 25, "metric": "metric"},
 }
 
