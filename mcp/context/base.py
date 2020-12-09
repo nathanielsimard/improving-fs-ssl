@@ -34,7 +34,7 @@ from mcp.data.dataset.dataset import (
 from mcp.data.dataset.transforms import KorniaTransforms
 from mcp.evaluation import Evaluation, EvaluationLoggers
 from mcp.model.base import Model
-from mcp.model.resnet import ResNet18, ResNet50
+from mcp.model.resnet import ResNet12, ResNet18, ResNet50
 from mcp.result.experiment import ExperimentResult
 from mcp.result.logger import ResultLogger
 from mcp.task.compute import TaskCompute
@@ -81,6 +81,8 @@ class ModelModule(Module):
             return ResNet18(self.config.model.embedding_size)
         elif self.config.model.architecture == ModelArchitecture.RESNET_50:
             return ResNet50(self.config.model.embedding_size)
+        elif self.config.model.architecture == ModelArchitecture.RESNET_12:
+            return ResNet12(self.config.model.embedding_size)
         else:
             raise ValueError(
                 f"Model architecture not yet supported {self.config.model.architecture}"
