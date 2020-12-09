@@ -74,7 +74,7 @@ class MultipleSupervisedTasks(Task):
         outputs = [t.run(encoder, x, y=y) for t in self.tasks]
 
         metric = np.asarray([o.metric for o in outputs]).mean()
-        loss = torch.as_tensor([o.loss for o in outputs]).mean()
+        loss: torch.Tensor = sum([o.loss for o in outputs]) / len(outputs)  # type: ignore
         metric_name = outputs[0].metric_name
         time = outputs[1].time
 
