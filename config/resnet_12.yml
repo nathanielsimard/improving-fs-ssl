@@ -1,0 +1,3 @@
+model: 
+  embedding_size: 2560
+  architecture: "resnet-12"
