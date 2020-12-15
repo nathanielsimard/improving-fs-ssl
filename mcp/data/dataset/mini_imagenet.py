@@ -97,18 +97,25 @@ class MiniImageNetDatasetLoader(DatasetLoader):
         with ZipFile(output_zip, "r") as zipObj:
             zipObj.extractall(output)
 
-    def _load(self, download_dir) -> Tuple[List[_Dataset], _Dataset, _Dataset]:
+    def _load(
+        self, download_dir, extra_data: bool = False
+    ) -> Tuple[List[_Dataset], _Dataset, _Dataset]:
         file_trains = [
             os.path.join(
                 download_dir, "miniImageNet_category_split_train_phase_train.pickle"
-            ),
-            os.path.join(
-                download_dir, "miniImageNet_category_split_train_phase_val.pickle"
-            ),
-            os.path.join(
-                download_dir, "miniImageNet_category_split_train_phase_test.pickle"
-            ),
+            )
         ]
+
+        if extra_data:
+            file_trains += [
+                os.path.join(
+                    download_dir, "miniImageNet_category_split_train_phase_val.pickle"
+                ),
+                os.path.join(
+                    download_dir, "miniImageNet_category_split_train_phase_test.pickle"
+                ),
+            ]
+
         file_valid = os.path.join(
             download_dir, "miniImageNet_category_split_val.pickle"
         )
