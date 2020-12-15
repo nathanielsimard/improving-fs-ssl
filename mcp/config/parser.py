@@ -67,13 +67,24 @@ DEFAULT_CONFIG: ConfigType = {
             "head_size": 128,
             "hidden_size": 2048,
             "tau": 0.99,
-            "scale": [0.08, 1.0],
+            "key_transforms": None,
+            "key_forwards": None,
         },
         "rotation": {"compute_tfm": False},
         "weights": [1, 250],
+        "supervised": {
+            "key_transforms": ["default-transform"],
+            "key_forwards": ["default-forward"],
+        },
     },
     "model": {"embedding_size": 512, "architecture": "resnet-18"},
-    "transform": {"crop_size": [96, 96], "crop_padding": 4, "image_size": [96, 96]},
+    "transform": {
+        "difficulty": "default",
+        "crop_size": [96, 96],
+        "crop_padding": 4,
+        "image_size": [96, 96],
+        "scale": [0.08, 1.0],
+    },
     "evaluation": {"num_iterations": 25, "metric": "metric"},
 }
 

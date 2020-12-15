@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Optional
 
 from mcp.config.loader import ConfigType
 
@@ -19,7 +19,13 @@ class BYOLConfig(NamedTuple):
     head_size: int
     hidden_size: int
     tau: float
-    scale: List[float]
+    key_forwards: Optional[List[str]]
+    key_transforms: Optional[List[str]]
+
+
+class SupervisedConfig(NamedTuple):
+    key_forwards: List[str]
+    key_transforms: List[str]
 
 
 class TaskConfig(NamedTuple):
@@ -28,6 +34,7 @@ class TaskConfig(NamedTuple):
     valid: List[TaskType]
     byol: BYOLConfig
     rotation: RotationConfig
+    supervised: SupervisedConfig
 
 
 def parse(config: ConfigType) -> TaskConfig:
@@ -38,6 +45,7 @@ def parse(config: ConfigType) -> TaskConfig:
         valid=[TaskType(t) for t in config["valid"]],
         byol=_parse_byol(config),
         rotation=_parse_rotation(config),
+        supervised=_parse_supervised(config),
     )
 
     assert len(task_config.train) == len(
@@ -48,19 +56,39 @@ def parse(config: ConfigType) -> TaskConfig:
 
 def _parse_byol(config: ConfigType) -> BYOLConfig:
     config = config["byol"]
-    scale = config["scale"]
 
-    assert len(scale) == 2, "Scale must have two values"
+    key_transforms = config["key_transforms"]
+
+    if key_transforms is not None:
+        assert len(key_transforms) == 2, "Should have two keys"
+
+    key_forwards = config["key_forwards"]
+
+    if key_forwards is not None:
+        assert len(key_forwards) == 2, "Should have two keys"
 
     return BYOLConfig(
         head_size=config["head_size"],
         hidden_size=config["hidden_size"],
         tau=config["tau"],
-        scale=scale,
+        key_forwards=key_forwards,
+        key_transforms=key_transforms,
     )
+
+
+def _parse_supervised(config: ConfigType) -> SupervisedConfig:
+    config = config["supervised"]
+
+    key_transforms = config["key_transforms"]
+    assert len(key_transforms) > 0, "Should have at least 1 key"
+
+    key_forwards = config["key_forwards"]
+    assert len(key_forwards) > 0, "Should have at least 1 key"
+
+    return SupervisedConfig(key_transforms=key_transforms, key_forwards=key_forwards)
 
 
 def _parse_rotation(config: ConfigType) -> RotationConfig:
     config = config["rotation"]
 
-    return RotationConfig(compute_tfm=config["compute_tfm"],)
+    return RotationConfig(compute_tfm=config["compute_tfm"])

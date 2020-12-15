@@ -13,7 +13,7 @@ from mcp.task.byol import BYOLTask
 from mcp.task.compute import TaskCompute
 from mcp.task.rotation import BatchRotation, RotationTask
 from mcp.task.solarization import BatchSolarization, SolarizationTask
-from mcp.task.supervised import SupervisedTask
+from mcp.task.supervised import MultipleSupervisedTasks, SupervisedTask
 
 TasksTrain = NewType("TasksTrain", list)
 TasksValid = NewType("TasksValid", list)
@@ -40,7 +40,11 @@ class TaskModule(Module):
     @inject
     @singleton
     def provide_compute(self, transforms: KorniaTransforms) -> TaskCompute:
-        return TaskCompute(transforms)
+        return TaskCompute(
+            transforms,
+            self.config.transform.difficulty,
+            tuple(self.config.transform.scale),  # type: ignore
+        )
 
     @provider
     @inject
@@ -79,14 +83,24 @@ class TaskModule(Module):
 
     @provider
     @inject
-    def provide_byol_task(self, transforms: KorniaTransforms) -> BYOLTask:
+    def provide_byol_task(
+        self, transforms: KorniaTransforms, compute: TaskCompute
+    ) -> BYOLTask:
+        def fix_key(key):
+            if key is None:
+                return None
+            return tuple(key)
+
         return BYOLTask(
             self.config.model.embedding_size,
             transforms,
             self.config.task.byol.head_size,
             self.config.task.byol.hidden_size,
             self.config.task.byol.tau,
-            tuple(self.config.task.byol.scale),  # type: ignore
+            tuple(self.config.transform.scale),  # type: ignore
+            fix_key(self.config.task.byol.key_transforms),
+            fix_key(self.config.task.byol.key_forwards),
+            compute,
         )
 
     @provider
@@ -94,9 +108,26 @@ class TaskModule(Module):
     def provide_train_supervised_task(
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskTrain:
-        return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.train_num_class, compute
-        )
+        key_transforms = self.config.task.supervised.key_transforms
+        key_forwards = self.config.task.supervised.key_forwards
+
+        def _task(key_tr, key_fo):
+            return SupervisedTask(  # type: ignore
+                self.config.model.embedding_size,
+                metadata.train_num_class,
+                compute,
+                key_tr,
+                key_fo,
+            )
+
+        keys = list(zip(key_transforms, key_forwards))
+
+        if len(keys) == 1:
+            return _task(key_transforms[0], key_forwards[0])
+        else:
+            return MultipleSupervisedTasks(
+                [_task(key_tr, key_fo) for key_tr, key_fo in keys]
+            )
 
     @provider
     @inject
@@ -104,7 +135,7 @@ class TaskModule(Module):
         self, metadata: DatasetMetadata, compute: TaskCompute
     ) -> SupervisedTaskValid:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.valid_num_class, compute
+            self.config.model.embedding_size, metadata.valid_num_class, compute,
         )
 
     @provider
@@ -114,7 +145,7 @@ class TaskModule(Module):
         self, metadata: DatasetMetadata, compute: TaskCompute,
     ) -> TaskTest:
         return SupervisedTask(  # type: ignore
-            self.config.model.embedding_size, metadata.test_num_class, compute
+            self.config.model.embedding_size, metadata.test_num_class, compute,
         )
 
     @multiprovider

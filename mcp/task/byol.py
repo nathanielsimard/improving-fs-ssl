@@ -10,6 +10,7 @@ from mcp.data.dataset.transforms import KorniaTransforms, TransformType
 from mcp.model.base import freeze_weights
 from mcp.model.utils import BatchNormHead
 from mcp.task.base import Task, TaskOutput
+from mcp.task.compute import TaskCompute
 
 
 class TrainableModule(nn.Module):
@@ -28,9 +29,15 @@ class BYOLTask(Task):
         hidden_size: int,
         tau: float,
         scale: Tuple[float, float],
+        key_transforms: Optional[Tuple[str, str]],
+        key_forwards: Optional[Tuple[str, str]],
+        compute: TaskCompute,
     ):
         super().__init__()
         self.tau = tau
+        self.compute = compute
+        self.key_forwards = key_forwards
+        self.key_transforms = key_transforms
         head_projection = BatchNormHead(embedding_size, hidden_size, head_size)
         head_prediction = BatchNormHead(head_size, hidden_size, head_size)
 
@@ -69,24 +76,21 @@ class BYOLTask(Task):
     ) -> TaskOutput:
         self._update_momentum_model(encoder, self.trainable.head_projection)
 
-        x1 = self.transform(x)
-        x2 = self.transform(x)
+        x1_tfm, x2_tfm = self._compute_transform(x)
+        x1, x2 = self._compute_forward(encoder, x1_tfm, x2_tfm)
 
-        x_one = encoder(x1)
-        x_two = encoder(x2)
-
-        online_proj_one = self.trainable.head_projection(x_one)
-        online_proj_two = self.trainable.head_projection(x_two)
+        online_proj_one = self.trainable.head_projection(x1)
+        online_proj_two = self.trainable.head_projection(x2)
 
         online_pred_one = self.trainable.head_prediction(online_proj_one)
         online_pred_two = self.trainable.head_prediction(online_proj_two)
 
         with torch.no_grad():
-            x_one = self._momentum_encoder(x1)  # type: ignore
-            x_two = self._momentum_encoder(x2)  # type: ignore
+            x1 = self._momentum_encoder(x1_tfm)  # type: ignore
+            x2 = self._momentum_encoder(x2_tfm)  # type: ignore
 
-            target_proj_one = self._momentum_head_projection(x_one)  # type: ignore
-            target_proj_two = self._momentum_head_projection(x_two)  # type: ignore
+            target_proj_one = self._momentum_head_projection(x1)  # type: ignore
+            target_proj_two = self._momentum_head_projection(x2)  # type: ignore
 
         loss_one = self.loss(online_pred_one, target_proj_two.detach())
         loss_two = self.loss(online_pred_two, target_proj_one.detach())
@@ -95,6 +99,30 @@ class BYOLTask(Task):
         metric = loss.cpu().detach().item()
 
         return TaskOutput(loss=loss, metric=metric, metric_name="MSE-norm", time=time())
+
+    def _compute_transform(self, x):
+        if self.key_transforms is None:
+            x1_tfm = self.transform(x)
+            x2_tfm = self.transform(x)
+        else:
+            x1_tfm = self.compute.cache_transform(
+                x, training=True, key=self.key_transforms[0]
+            )
+            x2_tfm = self.compute.cache_transform(
+                x, training=True, key=self.key_transforms[1]
+            )
+
+        return x1_tfm, x2_tfm
+
+    def _compute_forward(self, encoder, x1_tfm, x2_tfm):
+        if self.key_forwards is None:
+            x1 = encoder(x1_tfm)
+            x2 = encoder(x2_tfm)
+        else:
+            x1 = self.compute.cache_forward(x1_tfm, encoder, key=self.key_forwards[0])
+            x2 = self.compute.cache_forward(x2_tfm, encoder, key=self.key_forwards[1])
+
+        return x1, x2
 
     def train(self, mode: bool = True):
         self._training = mode
