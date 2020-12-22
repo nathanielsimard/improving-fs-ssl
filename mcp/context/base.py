@@ -82,7 +82,8 @@ class ModelModule(Module):
         elif self.config.model.architecture == ModelArchitecture.RESNET_50:
             return ResNet50(self.config.model.embedding_size)
         elif self.config.model.architecture == ModelArchitecture.RESNET_12:
-            return ResNet12(self.config.model.embedding_size)
+            dropblock_size = 2 if self.config.dataset.source == Source.CIFAR_FS else 5
+            return ResNet12(self.config.model.embedding_size, dropblock_size=dropblock_size)
         else:
             raise ValueError(
                 f"Model architecture not yet supported {self.config.model.architecture}"

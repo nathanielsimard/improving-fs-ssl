@@ -175,5 +175,5 @@ class ResNet(nn.Module):
         return x
 
 
-def resnet12(keep_prob=1.0, avg_pool=False, **kwargs):
-    return ResNet(BasicBlock, keep_prob=keep_prob, avg_pool=avg_pool, **kwargs)
+def resnet12(keep_prob=1.0, avg_pool=False, dropblock_size=2, **kwargs):
+    return ResNet(BasicBlock, keep_prob=keep_prob, avg_pool=avg_pool, dropblock_size=dropblock_size, **kwargs)
