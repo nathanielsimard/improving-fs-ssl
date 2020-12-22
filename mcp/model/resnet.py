@@ -47,11 +47,9 @@ class ResNet50(_ResNet):
 
 
 class ResNet12(Model):
-    def __init__(self, embed_size: int):
+    def __init__(self, embed_size: int, dropblock_size: int = 2):
         super().__init__()
-        # With avg pool: 2560
-        # Else: 23040
-        self._model = resnet12(avg_pool=True)
+        self._model = resnet12(avg_pool=True, dropblock_size=dropblock_size)
 
     def forward(self, x):
         return self._model(x)

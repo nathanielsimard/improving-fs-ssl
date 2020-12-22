@@ -19,3 +19,4 @@ transform:
   image_size: [84, 84]
   crop_size: [84, 84]
   crop_padding: 8
+  scale: [0.35, 1.0]

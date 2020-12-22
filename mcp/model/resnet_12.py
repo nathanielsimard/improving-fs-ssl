@@ -117,7 +117,7 @@ class ResNet(nn.Module):
             block_size=dropblock_size,
         )
         if avg_pool:
-            self.avgpool = nn.AvgPool2d(5, stride=1)
+            self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.keep_prob = keep_prob
         self.keep_avg_pool = avg_pool
         self.dropout = nn.Dropout(p=1 - self.keep_prob, inplace=False)
@@ -175,5 +175,11 @@ class ResNet(nn.Module):
         return x
 
 
-def resnet12(keep_prob=1.0, avg_pool=False, **kwargs):
-    return ResNet(BasicBlock, keep_prob=keep_prob, avg_pool=avg_pool, **kwargs)
+def resnet12(keep_prob=1.0, avg_pool=False, dropblock_size=2, **kwargs):
+    return ResNet(
+        BasicBlock,
+        keep_prob=keep_prob,
+        avg_pool=avg_pool,
+        dropblock_size=dropblock_size,
+        **kwargs
+    )
