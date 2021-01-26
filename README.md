@@ -1,5 +1,7 @@
 # Improving Few-Shot Learning with Auxiliary Self-Supervised Pretext Tasks
 
+The paper is available on [arxiv](https://arxiv.org/abs/2101.09825).
+
 ## Installing 
 
 You need to have anaconda installed to run this repository.
